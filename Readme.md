@@ -56,6 +56,14 @@ cryptogen generate --config=./crypto-config-supplier.yaml --output="organization
 ```bash
 cryptogen generate --config=./organizations/cryptogen/crypto-config-airline.yaml
 ```
+
+This will generate the crypto material. Therefore a new folder will be generated called organizations, where you will find:
+- Peeroganizations
+- OrdererOrganizations
+There will be the msp and tls certificates you need for the next steps
+
+To make sure it has been correctly generated navigate to cryptogen/organizations and look for a folder for each of the organizations you just called with the cryptogen command
+
 **Step 2: Configure Channel Artifacts**
 
 
@@ -159,7 +167,14 @@ The genesis block is the first block on the blockchain and serves as the startin
 
 
 ```diff
+- WARNING!!
 - inside the cryptogen:
+```
+
+First, export the path to configtx to be able to run this command: 
+
+```diff
++ export FABRIC_CFG_PATH=<path-to-your-fabric-samples-main>/test-network/configtx/
 ```
 
 2.3.1: Generate the Genesis Block for the Consortium
