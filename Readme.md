@@ -47,6 +47,17 @@ Here, Generate the Crypto Material: Run the cryptogen tool using your custom cry
 
 cryptogen generate --config=./crypto-config.yaml —output="organizations"
 
+First, export the path to the binaries: 
+
+```json
+Your Specific Case Sigrid:
+export PATH=$PATH:/Users/sigridveronica/go/src/github.com/FAL/fabric-samples/bin
+```
+
+```bash
+export PATH=$PATH:path-to-your-fabric-samples/bin
+```
+
 For every organization:
 ```bash
 cryptogen generate --config=./crypto-config-oem.yaml --output="organizations"
