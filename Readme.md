@@ -60,12 +60,12 @@ export PATH=$PATH:path-to-your-fabric-samples/bin
 
 For every organization:
 ```bash
-cryptogen generate --config=./crypto-config-oem.yaml --output="organizations"
-cryptogen generate --config=./crypto-config-airline.yaml --output="organizations"
-cryptogen generate --config=./crypto-config-supplier.yaml --output="organizations"
+cryptogen generate --config=./organizations/cryptogen/crypto-config-oem.yaml --output="organizations"
+cryptogen generate --config=./organizations/cryptogen/crypto-config-airline.yaml --output="organizations"
+cryptogen generate --config=./organizations/cryptogen/crypto-config-supplier.yaml --output="organizations"
 ```
 ```bash
-cryptogen generate --config=./crypto-config-orderer.yaml --output="organizations"
+cryptogen generate --config=./organizations/cryptogen/crypto-config-orderer.yaml --output="organizations"
 ```
 
 This will generate the crypto material. Therefore a new folder will be generated called organizations, where you will find:
