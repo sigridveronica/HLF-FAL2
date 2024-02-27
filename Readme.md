@@ -180,9 +180,20 @@ configtxgen -profile SupplierOEMChannel -outputCreateChannelTx ./channel-artifac
 ```
 
 Troubleshooting: 
+
 ```diff
 + export FABRIC_CFG_PATH=<path-to-your-fabric-samples-main>/test-network/configtx/
 ```
+zsh: command not found: cryptogen
+
+```diff
++ export PATH=<path_to_fabric_samples>/bin:$PATH
+```
+*command not found: cryptogen* indicates that the cryptogen tool is either not installed or not included in your system's PATH. The cryptogen tool is a utility provided by Hyperledger Fabric for generating cryptographic material (such as keys and certificates) for the network's organizations and orderers. 
+
+
+
+
 
 -------- NOT SURE THIS IS CORRECT ----------
 
