@@ -58,6 +58,10 @@ export PATH=$PATH:/Users/sigridveronica/go/src/github.com/FAL/fabric-samples/bin
 export PATH=$PATH:path-to-your-fabric-samples/bin
 ```
 
+```json
+LOCATE IN TEST-NETWORK TO RUN
+```
+
 For every organization:
 ```bash
 cryptogen generate --config=./organizations/cryptogen/crypto-config-oem.yaml --output="organizations"
