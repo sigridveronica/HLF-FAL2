@@ -73,6 +73,7 @@ cryptogen generate --config=./organizations/cryptogen/crypto-config-orderer.yaml
 ```
 
 This will generate the crypto material. Therefore a new folder will be generated called organizations, where you will find:
+inside test-network/organizations:
 - Peeroganizations
 - OrdererOrganizations
 There will be the msp and tls certificates you need for the next steps
