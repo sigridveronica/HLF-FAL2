@@ -53,6 +53,9 @@ cryptogen generate --config=./crypto-config-oem.yaml --output="organizations"
 cryptogen generate --config=./crypto-config-airline.yaml --output="organizations"
 cryptogen generate --config=./crypto-config-supplier.yaml --output="organizations"
 ```
+```bash
+cryptogen generate --config=./organizations/cryptogen/crypto-config-airline.yaml
+```
 **Step 2: Configure Channel Artifacts**
 
 
