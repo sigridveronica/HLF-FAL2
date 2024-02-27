@@ -54,7 +54,7 @@ cryptogen generate --config=./crypto-config-airline.yaml --output="organizations
 cryptogen generate --config=./crypto-config-supplier.yaml --output="organizations"
 ```
 ```bash
-cryptogen generate --config=./organizations/cryptogen/crypto-config-airline.yaml
+cryptogen generate --config=./crypto-config-orderer.yaml --output="organizations"
 ```
 
 This will generate the crypto material. Therefore a new folder will be generated called organizations, where you will find:
