@@ -189,7 +189,11 @@ The genesis block is the first block on the blockchain and serves as the startin
 First, export the path to configtx to be able to run this command: 
 
 ```diff
-+ export FABRIC_CFG_PATH=<path-to-your-fabric-samples-main>/test-network/configtx/
++ export FABRIC_CFG_PATH=<path-to-your-fabric-samples>/test-network/configtx/
+```
+in your case
+```dif
+- export FABRIC_CFG_PATH=/Users/sigridveronica/go/src/github.com/FAL/fabric-samples/test-network/configtx/
 ```
 
 2.3.1: Generate the Genesis Block for the Consortium
