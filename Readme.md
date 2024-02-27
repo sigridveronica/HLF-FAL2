@@ -47,12 +47,39 @@ Here, Generate the Crypto Material: Run the cryptogen tool using your custom cry
 
 cryptogen generate --config=./crypto-config.yaml —output="organizations"
 
+First, export the path to the binaries: 
+
+```json
+Your Specific Case Sigrid:
+export PATH=$PATH:/Users/sigridveronica/go/src/github.com/FAL/fabric-samples/bin
+```
+
+```bash
+export PATH=$PATH:path-to-your-fabric-samples/bin
+```
+
+```json
+LOCATE IN TEST-NETWORK TO RUN
+```
+
 For every organization:
 ```bash
-cryptogen generate --config=./crypto-config-oem.yaml --output="organizations"
-cryptogen generate --config=./crypto-config-airline.yaml --output="organizations"
-cryptogen generate --config=./crypto-config-supplier.yaml --output="organizations"
+cryptogen generate --config=./organizations/cryptogen/crypto-config-oem.yaml --output="organizations"
+cryptogen generate --config=./organizations/cryptogen/crypto-config-airline.yaml --output="organizations"
+cryptogen generate --config=./organizations/cryptogen/crypto-config-supplier.yaml --output="organizations"
 ```
+```bash
+cryptogen generate --config=./organizations/cryptogen/crypto-config-orderer.yaml --output="organizations"
+```
+
+This will generate the crypto material. Therefore a new folder will be generated called organizations, where you will find:
+inside test-network/organizations:
+- Peeroganizations
+- OrdererOrganizations
+There will be the msp and tls certificates you need for the next steps
+
+To make sure it has been correctly generated navigate to cryptogen/organizations and look for a folder for each of the organizations you just called with the cryptogen command
+
 **Step 2: Configure Channel Artifacts**
 
 
@@ -156,7 +183,18 @@ The genesis block is the first block on the blockchain and serves as the startin
 
 
 ```diff
+- WARNING!!
 - inside the cryptogen:
+```
+
+First, export the path to configtx to be able to run this command: 
+
+```diff
++ export FABRIC_CFG_PATH=<path-to-your-fabric-samples>/test-network/configtx/
+```
+in your case
+```dif
+- export FABRIC_CFG_PATH=/Users/sigridveronica/go/src/github.com/FAL/fabric-samples/test-network/configtx/
 ```
 
 2.3.1: Generate the Genesis Block for the Consortium
@@ -177,9 +215,20 @@ configtxgen -profile SupplierOEMChannel -outputCreateChannelTx ./channel-artifac
 ```
 
 Troubleshooting: 
+
 ```diff
 + export FABRIC_CFG_PATH=<path-to-your-fabric-samples-main>/test-network/configtx/
 ```
+zsh: command not found: cryptogen
+
+```diff
++ export PATH=<path_to_fabric_samples>/bin:$PATH
+```
+*command not found: cryptogen* indicates that the cryptogen tool is either not installed or not included in your system's PATH. The cryptogen tool is a utility provided by Hyperledger Fabric for generating cryptographic material (such as keys and certificates) for the network's organizations and orderers. 
+
+
+
+
 
 -------- NOT SURE THIS IS CORRECT ----------
 
