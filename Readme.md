@@ -585,6 +585,83 @@ peer lifecycle chaincode package oemContract.tar.gz --path ./chaincode/oemContra
 + export PATH=<path_to_fabric_samples>/bin:$PATH
 ```
 
+****INTERACT WITH YOUR NETWORK****
+
+Creating an application from scratch that interacts with your oemContract.go smart contract involves several steps, including setting up your development environment, writing the application code, and deploying the application. Below is a comprehensive guide to get you started.
+
+**Step 1: Environment Setup**
+
+> [!note]  
+> If you are following the tutorial, step 1 has been described above: Use the Hyperledger Fabric test network from the fabric-samples repository as a starting point.
+> Navigate to the test-network directory and start the network 
+> Deploy Your Smart Contract:
+> Package your oemContract.go smart contract.
+> Install the chaincode on your network using the peer CLI.
+> Approve and commit the chaincode.
+
+
+**Step 2: Application Development**
+Create a New Go Module:
+
+In a new directory, initialize a Go module:
+```bash
+go mod init oemContractApp
+```
+
+**Write Your Application Code:**
+
+Refer to the assetTransfer.go file for examples of how to interact with the network.
+Implement functions to interact with your smart contract's CreateActivity and TransferAsset functions. 
+
+**Manage Dependencies:**
+
+Add the Fabric SDK Go to your module:
+```bash
+go get github.com/hyperledger/fabric-sdk-go
+```
+Ensure all dependencies are correctly installed by running:
+```bash
+go mod tidy
+```
+
+**Step 3: Application Execution**
+
+**Run Your Application:**
+Execute your application with:
+```bash
+go run .
+```
+This will interact with your deployed smart contract on the Hyperledger Fabric network.
+
+**Step 4: Frontend (Optional)**
+
+If you plan to create a frontend for your application:
+
+Choose a Framework:
+
+Decide on a frontend framework or library (e.g., React, Angular, Vue.js).
+Set Up Your Frontend Project:
+
+Initialize your project using your chosen framework's CLI.
+Implement the UI to interact with your backend application.
+Integrate with the Backend:
+
+Use REST APIs or a similar approach to connect your frontend with the Go application.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
