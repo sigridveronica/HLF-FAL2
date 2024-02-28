@@ -180,7 +180,8 @@ Hyperledger Fabric's configtx.yaml does not directly specify peers within each c
 After updating your configtx.yaml, you'll use the configtxgen tool to generate the genesis block for the system channel and the channel creation transactions for your custom channels.
 
 The genesis block is the first block on the blockchain and serves as the starting point of the network.
-
+ *Why not creating a genesis block for each channel?*
+ *Creating a genesis block for each channel isn't typically necessary because the genesis block is primarily used to bootstrap the Hyperledger Fabric network itself, particularly the ordering service. For each additional channel you create after the network is up and running, you generate a channel configuration transaction (not a genesis block) that defines the policies, members, and settings for that specific channel. This channel configuration transaction is then submitted to the network to create the new channel.*
 
 ```diff
 - WARNING!!
