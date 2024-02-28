@@ -552,6 +552,9 @@ ls ${FABRIC_CFG_PATH}
 ```
 *This command should list the core.yaml among other configuration files. If the file is not present, you'll need to locate it and ensure it's in the correct directory.*
 
+```bash
+export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/oem.example.com/msp
+```
 **1.Package your chaincode**
 ```bash
 peer lifecycle chaincode package oemContract.tar.gz --path ./chaincode/oemContract/ --lang golang --label oemContract_1
