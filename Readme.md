@@ -209,7 +209,17 @@ configtxgen -profile OEMChannel -outputBlock ./channel-artifacts/genesis.block -
 
 **Step 3: Update Docker Compose Files**
 
-3.1. Update docker-compose-test-net.yaml
+
+
+3.1. **Update docker-compose-test-net.yaml:**
+
+docker-compose-test-net.yaml
+This file is used to define and configure the network components necessary for a Hyperledger Fabric test network. It specifies the Docker containers that will run the Fabric peer nodes, orderer nodes, and other necessary services for the network to function. The configuration includes:
+
+- Peer Services: Defines the peer nodes for the organizations in the network. For example, peer0.org1.example.com and peer0.org2.example.com are defined as peers for two different organizations. Each peer service configuration includes the Docker image to use (hyperledger/fabric-peer:latest), environment variables to configure the peer, and volumes for data persistence and configuration.
+- Volumes: Specifies the directories on the host that are mounted into the containers. This is used for configuration files and to ensure data persistence across container restarts.
+- Network Settings: Defines the Docker network settings, such as the network mode, to ensure that all containers can communicate with each other.
+
 
 3.1.1 Add New Peer Services: For each new organization, you need to define peer services similar to those for peer0.org1.example.com and peer0.org2.example.com. Use the provided service definitions as a template. For example, to add a peer for the OEM organization, you might add:
 
@@ -228,7 +238,16 @@ peer0.oem.example.com:
 ```
 3.1.2 Repeat for Other Organizations: Repeat the above step for each peer of the Airline and Supplier organizations, adjusting the service names and container names accordingly (e.g., peer0.airline.example.com, peer0.supplier.example.com).
 
-3.2 Update docker-compose-ca.yaml
+3.2 **Update docker-compose-ca.yaml:**
+
+*docker-compose-ca.yaml*
+This file is specifically focused on setting up the Certificate Authorities (CAs) for the network. The Certificate Authorities are responsible for issuing and managing the digital certificates for network participants, which are crucial for the authentication and authorization mechanisms in Hyperledger Fabric. However, based on the provided content, it appears that the specific configurations for the CAs were not included in the snippet. Typically, this file would include:
+
+- CA Services: Each organization in the network would have its own CA service defined in this file. The service configuration would specify the Docker image for the CA (hyperledger/fabric-ca:latest), environment variables for CA configuration, ports for accessing the CA, and volumes for data persistence.
+Environment Variables: Used to configure the CA, such as setting the home directory, CA name, and enabling TLS.
+- Ports: Specifies the ports that the CA services will listen on, allowing network participants to communicate with the CA for operations like enrolling and registering identities.
+In summary, the docker-compose-test-net.yaml file is used to configure and launch the core network components (peers, orderers, etc.), while the docker-compose-ca.yaml file is focused on setting up the Certificate Authorities necessary for managing identities within the network. Both are essential for deploying a functioning Hyperledger Fabric network environment using Docker.
+
 If you're using separate CA services for each organization (which is a common practice for managing identities and permissions within Hyperledger Fabric networks), you'll need to add services for the CAs of your new organizations in the docker-compose-ca.yaml file. This file might not be explicitly mentioned in the summaries, but it's commonly used for defining Certificate Authorities in Fabric networks.
 
 3.2.1 Define CA Services: For each new organization, define a CA service. You can base your definitions on any existing CA service definitions, modifying them to suit your new organizations. For example:
