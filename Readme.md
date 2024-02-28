@@ -323,6 +323,10 @@ This overview provides a starting point. Given the complexity of Hyperledger Fab
 
 ##########################
 
+```json
+HIGH-LEVEL PROCESS
+```
+
 
 To set up your Hyperledger Fabric network with the specific organizations (OEM, Airline, Supplier) instead of the default Org1 and Org2, you'll need to modify several configuration files and potentially scripts within the test-network directory. Here's a step-by-step guide to help you through this process:
 
