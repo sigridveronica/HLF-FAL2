@@ -185,7 +185,7 @@ The genesis block is the first block on the blockchain and serves as the startin
 
 ```diff
 - WARNING!!
-- inside the cryptogen:
+- STILL INSIDE TEST-NETWORK
 ```
 
 First, export the path to configtx to be able to run this command: 
