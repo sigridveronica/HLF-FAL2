@@ -203,6 +203,10 @@ in your case
 configtxgen -profile OEMChannel -outputBlock ./channel-artifacts/genesis.block -channelID system-channel
 ```
 2.3.2: Create Channel Transaction for OEMChannel
+
+For each channel, you need to create a channel configuration transaction. This defines the initial configuration of the channel, including which organizations are members.
+For the OEM channel, you've already created the genesis block which acts as the initial configuration. For the Airline-OEM and Supplier-OEM channels, you'll need to create configuration transactions.
+
 ```bash
 configtxgen -profile OEMChannel -outputCreateChannelTx ./channel-artifacts/OEMChannel.tx -channelID oemchannel
 ```
