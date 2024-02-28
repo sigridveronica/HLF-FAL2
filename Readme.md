@@ -276,7 +276,7 @@ Run the following command to start your network with the new configuration:
 ```json
 WARNING: FROM TEST-NETWORK
 ```
-```json
+```js
 docker-compose -f compose/docker/docker-compose-ca.yaml -f compose/docker/docker-compose-test-net.yaml up -d
 ```
 
