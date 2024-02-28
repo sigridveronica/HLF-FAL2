@@ -277,8 +277,9 @@ Run the following command to start your network with the new configuration:
 docker-compose -f compose/docker/docker-compose-ca.yaml -f compose/docker/docker-compose-test-net.yaml up -d
 ```
 
-Troubleshooting: If you encounter issues, check the Docker logs for your containers to identify any errors in the configuration or startup process.
-This guide provides a high-level overview of the steps required to include new organizations in your Hyperledger Fabric network using Docker Compose. Depending on your specific requirements, additional configuration or adjustments may be necessary.
+> [!note]  
+> If you encounter issues, check the Docker logs for your containers to identify any errors in the configuration or startup process.
+> This guide provides a high-level overview of the steps required to include new organizations in your Hyperledger Fabric network using Docker Compose. Depending on your specific requirements, additional configuration or adjustments may be necessary.
 
 
 
@@ -307,17 +308,19 @@ configtxgen -profile AirlineOEMChannel -outputCreateChannelTx ./channel-artifact
 configtxgen -profile SupplierOEMChannel -outputCreateChannelTx ./channel-artifacts/SupplierOEMChannel.tx -channelID supplieroemchannel
 ```
 
-Troubleshooting: 
+> [!note]  
+> Troubleshooting: zsh: command not found: cryptogen
 
 ```diff
 + export FABRIC_CFG_PATH=<path-to-your-fabric-samples-main>/test-network/configtx/
 ```
-zsh: command not found: cryptogen
+
+> [!note]  
+> Troubleshooting: zsh: *command not found: cryptogen:* indicates that the cryptogen tool is either not installed or not included in your system's PATH. The cryptogen tool is a utility provided by Hyperledger Fabric for generating cryptographic material (such as keys and certificates) for the network's organizations and orderers. 
 
 ```diff
 + export PATH=<path_to_fabric_samples>/bin:$PATH
 ```
-*command not found: cryptogen* indicates that the cryptogen tool is either not installed or not included in your system's PATH. The cryptogen tool is a utility provided by Hyperledger Fabric for generating cryptographic material (such as keys and certificates) for the network's organizations and orderers. 
 
 
 
