@@ -347,6 +347,20 @@ If deploying chaincodes to these channels, modify the deployCC or deployCCAAS fu
 Ensure the networkDown function correctly cleans up all artifacts related to your three organizations and their channels. This is crucial for resetting the network state during testing or after network shutdown.
 
 
+For each channel, you need to create a channel configuration transaction. This defines the initial configuration of the channel, including which organizations are members.
+For the OEM channel, you've already created the genesis block which acts as the initial configuration. For the Airline-OEM and Supplier-OEM channels, you'll need to create configuration transactions.
+
+```yaml
+configtxgen -profile OEMChannel -outputCreateChannelTx ./channel-artifacts/OEMChannel.tx -channelID oemchannel
+```
+#Create Channel Transaction for AirlineOEMChannel
+
+configtxgen -profile AirlineOEMChannel -outputCreateChannelTx ./channel-artifacts/AirlineOEMChannel.tx -channelID airlineoemchannel
+
+#2.3.4 Create Channel Transaction for SupplierOEMChannel
+
+configtxgen -profile SupplierOEMChannel -outputCreateChannelTx ./channel-artifacts/SupplierOEMChannel.tx -channelID supplieroemchannel
+```
 
 
 **5.2 Bring Up the Network** 
@@ -364,21 +378,6 @@ Once you've made the necessary updates, you can use the network.sh script to bri
 
 
 2.3.2: Create Channel Transaction for OEMChannel
-
-For each channel, you need to create a channel configuration transaction. This defines the initial configuration of the channel, including which organizations are members.
-For the OEM channel, you've already created the genesis block which acts as the initial configuration. For the Airline-OEM and Supplier-OEM channels, you'll need to create configuration transactions.
-
-```bash
-configtxgen -profile OEMChannel -outputCreateChannelTx ./channel-artifacts/OEMChannel.tx -channelID oemchannel
-```
-2.3.3 Create Channel Transaction for AirlineOEMChannel
-```bash
-configtxgen -profile AirlineOEMChannel -outputCreateChannelTx ./channel-artifacts/AirlineOEMChannel.tx -channelID airlineoemchannel
-```
-2.3.4 Create Channel Transaction for SupplierOEMChannel
-```bash
-configtxgen -profile SupplierOEMChannel -outputCreateChannelTx ./channel-artifacts/SupplierOEMChannel.tx -channelID supplieroemchannel
-```
 
 > [!note]  
 > Troubleshooting: zsh: command not found: cryptogen
