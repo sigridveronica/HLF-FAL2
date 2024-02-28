@@ -80,6 +80,7 @@ There will be the msp and tls certificates you need for the next steps
 
 To make sure it has been correctly generated navigate to cryptogen/organizations and look for a folder for each of the organizations you just called with the cryptogen command
 
+****Update Network Configuration****
 **Step 2: Configure Channel Artifacts**
 
 
@@ -317,3 +318,62 @@ This guide assumes familiarity with Hyperledger Fabric CLI tools and basic netwo
 The exact commands and file paths might vary based on your specific version of fabric-samples and your network configuration.
 Ensure you have all necessary binaries and Docker images for the version of Hyperledger Fabric you are using.
 This overview provides a starting point. Given the complexity of Hyperledger Fabric networks, you may need to adjust these instructions based on your specific requirements and the current state of your network configuration.
+
+
+
+##########################
+
+
+To set up your Hyperledger Fabric network with the specific organizations (OEM, Airline, Supplier) instead of the default Org1 and Org2, you'll need to modify several configuration files and potentially scripts within the test-network directory. Here's a step-by-step guide to help you through this process:
+
+Step 1: Update Cryptographic Material
+First, you need to generate cryptographic material for your new organizations. Since the cryptogen tool uses a configuration file to generate these materials, you'll need to create or modify existing crypto-config.yaml files for each of your organizations (OEM, Airline, Supplier).
+
+Create or Modify Crypto Config Files: Ensure you have a crypto-config.yaml for each of your organizations with the correct specifications. If these don't exist, you'll need to create them based on the examples provided for Org1 and Org2.
+
+Generate Cryptographic Material: Run the cryptogen tool for each of your organizations. For example:
+
+```bash
+cryptogen generate --config=./organizations/cryptogen/crypto-config-oem.yaml --output="organizations"
+cryptogen generate --config=./organizations/cryptogen/crypto-config-airline.yaml --output="organizations"
+cryptogen generate --config=./organizations/cryptogen/crypto-config-supplier.yaml --output="organizations"
+```
+
+**Step 2: Update Network Configuration**
+The configtx.yaml file defines the network configuration, including the consortiums and the channel configurations. You'll need to modify this file to include your new organizations.
+
+Modify configtx.yaml: Add your organizations under the Organizations section, and update the Profiles section to include your organizations in the consortium and channel configurations.
+
+**Step 3: Update Docker Compose Files**
+The Docker Compose files define the network's infrastructure. You'll need to modify these files to include your new organizations' peers, CAs, etc.
+
+Modify or Create Docker Compose Files: Based on the existing docker-compose-test-net.yaml, docker-compose-ca.yaml, and others, include services for your new organizations. Make sure to update service names, container names, and any relevant configurations to reflect your organizational structure.
+
+**Step 4: Update the network.sh Script**
+
+The network.sh script is used to bring up the network, create channels, and deploy chaincode. You'll need to modify this script to handle your new organizations.
+
+Modify network.sh: Update the script to include your new organizations when bringing up the network, creating channels, and setting anchor peers. This might involve significant changes, depending on how different your setup is from the default.
+
+**Step 5: Bring Up the Network**
+Once you've made the necessary updates, you can use the network.sh script to bring up your network. Since you've modified the organizations, ensure you also update any flags or parameters you pass to the script to reflect your new setup.
+
+```bash
+Copy code
+./network.sh up
+./network.sh createChannel
+```
+
+**Step 6: Deploy Chaincode**
+Follow the instructions in the README and the modified network.sh script to deploy your chaincode to the new network.
+
+
+**Additional Notes**
+Backup Original Files: Before making any changes, it's a good idea to backup the original configuration files and scripts.
+Review Changes Carefully: Ensure that your modifications are consistent across all files. Mismatches in organization names, MSP IDs, or channel configurations can lead to errors when starting the network.
+Documentation: Refer to the Hyperledger Fabric documentation for more details on configuration file formats and network setup.
+This process involves significant customization of the test network. Ensure you have a good understanding of Hyperledger Fabric's configuration mechanisms and the purpose of each component in the network.
+
+
+
+
