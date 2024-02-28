@@ -273,6 +273,13 @@ Run the following command to start your network with the new configuration:
 > [!warning]  
 > From test-network
 
+Before running the docker-compose command, export the DOCKER_SOCK environment variable with the path to your Docker socket. On Unix-based systems, including macOS, the Docker socket is typically located at /var/run/docker.sock. You can set the variable like this:
+
+```json
+export DOCKER_SOCK=/var/run/docker.sock
+```
+After setting the environment variable, you can rerun your docker-compose command:
+
 ```json
 docker-compose -f compose/docker/docker-compose-ca.yaml -f compose/docker/docker-compose-test-net.yaml up -d
 ```
