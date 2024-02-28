@@ -193,6 +193,9 @@ First, export the path to configtx to be able to run this command:
 ```diff
 + export FABRIC_CFG_PATH=<path-to-your-fabric-samples>/test-network/configtx/
 ```
+```json
+export FABRIC_CFG_PATH=$PWD/configtx/
+```
 in your case
 ```dif
 - export FABRIC_CFG_PATH=/Users/sigridveronica/go/src/github.com/FAL/fabric-samples/test-network/configtx/
