@@ -538,8 +538,25 @@ Add Dependencies: If your chaincode depends on external packages, such as Hyperl
 ```
 ```bash
 go get github.com/hyperledger/fabric-contract-api-go@latest
-``
+```
+**Instantiate chaincode**
 
+> [!warning]  
+> GO BACK TO TEST-NETWORK
+set the FABRIC_CFG_PATH to the parent config directory like so:
+```bash
+export FABRIC_CFG_PATH=${PWD}/../config/
+```
+Verify the existence of core.yaml: After setting the FABRIC_CFG_PATH, verify that the core.yaml file exists at the specified path by running:
+```bash
+ls ${FABRIC_CFG_PATH}
+```
+*This command should list the core.yaml among other configuration files. If the file is not present, you'll need to locate it and ensure it's in the correct directory.*
+
+With the FABRIC_CFG_PATH correctly set and pointing to a directory containing the core.yaml file, retry packaging your chaincode:
+```bash
+peer lifecycle chaincode package oemContract.tar.gz --path ./chaincode/oemContract/ --lang golang --label oemContract_1
+```
 
 
 
