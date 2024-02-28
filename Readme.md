@@ -58,9 +58,8 @@ export PATH=$PATH:/Users/sigridveronica/go/src/github.com/FAL/fabric-samples/bin
 export PATH=$PATH:path-to-your-fabric-samples/bin
 ```
 
-```json
-LOCATE IN TEST-NETWORK TO RUN
-```
+> [!warning]  
+> From test-network, run:
 
 For every organization:
 ```bash
@@ -184,10 +183,8 @@ The genesis block is the first block on the blockchain and serves as the startin
  *Why not creating a genesis block for each channel?*
  *Creating a genesis block for each channel isn't typically necessary because the genesis block is primarily used to bootstrap the Hyperledger Fabric network itself, particularly the ordering service. For each additional channel you create after the network is up and running, you generate a channel configuration transaction (not a genesis block) that defines the policies, members, and settings for that specific channel. This channel configuration transaction is then submitted to the network to create the new channel.*
 
-```diff
-- WARNING!!
-- STILL INSIDE TEST-NETWORK
-```
+> [!warning]  
+> Still from test-network
 
 First, export the path to configtx to be able to run this command: 
 
