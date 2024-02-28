@@ -1,7 +1,9 @@
 #!/bin/bash
-
+#
+# Copyright IBM Corp All Rights Reserved
+#
 # SPDX-License-Identifier: Apache-2.0
-
+#
 
 # This script brings up a Hyperledger Fabric network for testing smart contracts
 # and applications. The test network consists of two organizations with one
@@ -20,6 +22,7 @@ export PATH=${ROOTDIR}/../bin:${PWD}/../bin:$PATH
 export FABRIC_CFG_PATH=${PWD}/configtx
 export VERBOSE=false
 
+# push to the required directory & set a trap to go back if needed
 pushd ${ROOTDIR} > /dev/null
 trap "popd > /dev/null" EXIT
 
@@ -150,44 +153,106 @@ function checkPrereqs() {
 # certificates, and MSP folders that are needed to create the test network in the
 # "organizations/ordererOrganizations" directory.
 
-
+# Create Organization crypto material using cryptogen or CAs
 function createOrgs() {
   if [ -d "organizations/peerOrganizations" ]; then
     rm -Rf organizations/peerOrganizations && rm -Rf organizations/ordererOrganizations
   fi
 
-  infoln "Generating certificates using cryptogen tool"
+  # Create crypto material using cryptogen
+  if [ "$CRYPTO" == "cryptogen" ]; then
+    which cryptogen
+    if [ "$?" -ne 0 ]; then
+      fatalln "cryptogen tool not found. exiting"
+    fi
+    infoln "Generating certificates using cryptogen tool"
 
-  infoln "Creating OEM Identities"
-  set -x
-  cryptogen generate --config=./organizations/cryptogen/crypto-config-oem.yaml --output="organizations"
-  res=$?
-  { set +x; } 2>/dev/null
-  if [ $res -ne 0 ]; then
-    fatalln "Failed to generate certificates for OEM"
+    infoln "Creating Org1 Identities"
+
+    set -x
+    cryptogen generate --config=./organizations/cryptogen/crypto-config-org1.yaml --output="organizations"
+    res=$?
+    { set +x; } 2>/dev/null
+    if [ $res -ne 0 ]; then
+      fatalln "Failed to generate certificates..."
+    fi
+
+    infoln "Creating Org2 Identities"
+
+    set -x
+    cryptogen generate --config=./organizations/cryptogen/crypto-config-org2.yaml --output="organizations"
+    res=$?
+    { set +x; } 2>/dev/null
+    if [ $res -ne 0 ]; then
+      fatalln "Failed to generate certificates..."
+    fi
+
+    infoln "Creating Orderer Org Identities"
+
+    set -x
+    cryptogen generate --config=./organizations/cryptogen/crypto-config-orderer.yaml --output="organizations"
+    res=$?
+    { set +x; } 2>/dev/null
+    if [ $res -ne 0 ]; then
+      fatalln "Failed to generate certificates..."
+    fi
+
   fi
 
-  infoln "Creating Supplier Identities"
-  set -x
-  cryptogen generate --config=./organizations/cryptogen/crypto-config-supplier.yaml --output="organizations"
-  res=$?
-  { set +x; } 2>/dev/null
-  if [ $res -ne 0 ]; then
-    fatalln "Failed to generate certificates for Supplier"
+  # Create crypto material using cfssl
+  if [ "$CRYPTO" == "cfssl" ]; then
+
+    . organizations/cfssl/registerEnroll.sh
+    #function_name cert-type   CN   org
+    peer_cert peer peer0.org1.example.com org1
+    peer_cert admin Admin@org1.example.com org1
+
+    infoln "Creating Org2 Identities"
+    #function_name cert-type   CN   org
+    peer_cert peer peer0.org2.example.com org2
+    peer_cert admin Admin@org2.example.com org2
+
+    infoln "Creating Orderer Org Identities"
+    #function_name cert-type   CN   
+    orderer_cert orderer orderer.example.com
+    orderer_cert admin Admin@example.com
+
+  fi 
+
+  # Create crypto material using Fabric CA
+  if [ "$CRYPTO" == "Certificate Authorities" ]; then
+    infoln "Generating certificates using Fabric CA"
+    ${CONTAINER_CLI_COMPOSE} -f compose/$COMPOSE_FILE_CA -f compose/$CONTAINER_CLI/${CONTAINER_CLI}-$COMPOSE_FILE_CA up -d 2>&1
+
+    . organizations/fabric-ca/registerEnroll.sh
+
+    while :
+    do
+      if [ ! -f "organizations/fabric-ca/org1/tls-cert.pem" ]; then
+        sleep 1
+      else
+        break
+      fi
+    done
+
+    infoln "Creating Org1 Identities"
+
+    createOrg1
+
+    infoln "Creating Org2 Identities"
+
+    createOrg2
+
+    infoln "Creating Orderer Org Identities"
+
+    createOrderer
+
   fi
 
-  infoln "Creating Airline Identities"
-  set -x
-  cryptogen generate --config=./organizations/cryptogen/crypto-config-airline.yaml --output="organizations"
-  res=$?
-  { set +x; } 2>/dev/null
-  if [ $res -ne 0 ]; then
-    fatalln "Failed to generate certificates for Airline"
-  fi
-
-  infoln "Generating CCP files for OEM, Supplier, and Airline"
+  infoln "Generating CCP files for Org1 and Org2"
   ./organizations/ccp-generate.sh
 }
+
 # Once you create the organization crypto material, you need to create the
 # genesis block of the application channel.
 
@@ -215,14 +280,20 @@ function createOrgs() {
 # point the crypto material and genesis block that were created in earlier.
 
 # Bring up the peer and orderer nodes using docker compose.
-
 function networkUp() {
+
   checkPrereqs
+
+  # generate artifacts if they don't exist
   if [ ! -d "organizations/peerOrganizations" ]; then
     createOrgs
   fi
 
   COMPOSE_FILES="-f compose/${COMPOSE_FILE_BASE} -f compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_BASE}"
+
+  if [ "${DATABASE}" == "couchdb" ]; then
+    COMPOSE_FILES="${COMPOSE_FILES} -f compose/${COMPOSE_FILE_COUCH} -f compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_COUCH}"
+  fi
 
   DOCKER_SOCK="${DOCKER_SOCK}" ${CONTAINER_CLI_COMPOSE} ${COMPOSE_FILES} up -d 2>&1
 
@@ -231,34 +302,41 @@ function networkUp() {
     fatalln "Unable to start network"
   fi
 }
+
 # call the script to create the channel, join the peers of org1 and org2,
 # and then update the anchor peers for each organization
 function createChannel() {
+  # Bring up the network if it is not already up.
   bringUpNetwork="false"
+
+  local bft_true=$1
 
   if ! $CONTAINER_CLI info > /dev/null 2>&1 ; then
     fatalln "$CONTAINER_CLI network is required to be running to create a channel"
   fi
+
   # check if all containers are present
   CONTAINERS=($($CONTAINER_CLI ps | grep hyperledger/ | awk '{print $2}'))
   len=$(echo ${#CONTAINERS[@]})
 
-  if [[ $len -lt 4 ]] || [[ ! -d "organizations/peerOrganizations" ]]; then
-    bringUpNetwork="true"
-  else
-    echo "Network Running Already"
+  if [[ $len -ge 4 ]] && [[ ! -d "organizations/peerOrganizations" ]]; then
+    echo "Bringing network down to sync certs with containers"
+    networkDown
   fi
+
+  [[ $len -lt 4 ]] || [[ ! -d "organizations/peerOrganizations" ]] && bringUpNetwork="true" || echo "Network Running Already"
 
   if [ $bringUpNetwork == "true"  ]; then
     infoln "Bringing up network"
     networkUp
   fi
+
   # now run the script that creates a channel. This script uses configtxgen once
   # to create the channel creation transaction and the anchor peer updates.
-  scripts/createChannel.sh $CHANNEL_NAME $CLI_DELAY $MAX_RETRY $VERBOSE
+  scripts/createChannel.sh $CHANNEL_NAME $CLI_DELAY $MAX_RETRY $VERBOSE $bft_true
 }
-##################### UNCHANGED FROM ORIGINAL NETWORK.SH ###################################
-# Add other functions like deployCC, networkDown, etc., as needed from the original script.
+
+
 ## Call the script to deploy a chaincode to the channel
 function deployCC() {
   scripts/deployCC.sh $CHANNEL_NAME $CC_NAME $CC_SRC_PATH $CC_SRC_LANGUAGE $CC_VERSION $CC_SEQUENCE $CC_INIT_FCN $CC_END_POLICY $CC_COLL_CONFIG $CLI_DELAY $MAX_RETRY $VERBOSE
@@ -381,8 +459,32 @@ function networkDown() {
     ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf channel-artifacts log.txt *.tar.gz'
   fi
 }
-###############################################################################################
+
+. ./network.config
+
+# use this as the default docker-compose yaml definition
+COMPOSE_FILE_BASE=compose-test-net.yaml
+# docker-compose.yaml file if you are using couchdb
+COMPOSE_FILE_COUCH=compose-couch.yaml
+# certificate authorities compose file
+COMPOSE_FILE_CA=compose-ca.yaml
+# use this as the default docker-compose yaml definition for org3
+COMPOSE_FILE_ORG3_BASE=compose-org3.yaml
+# use this as the docker compose couch file for org3
+COMPOSE_FILE_ORG3_COUCH=compose-couch-org3.yaml
+# certificate authorities compose file
+COMPOSE_FILE_ORG3_CA=compose-ca-org3.yaml
+#
+
+# Get docker sock path from environment variable
+SOCK="${DOCKER_HOST:-/var/run/docker.sock}"
+DOCKER_SOCK="${SOCK##unix://}"
+
+# BFT activated flag
+BFT=0
+
 # Parse commandline args
+
 ## Parse mode
 if [[ $# -lt 1 ]] ; then
   printHelp
@@ -397,21 +499,176 @@ if [ "$MODE" == "cc" ] && [[ $# -lt 1 ]]; then
   printHelp $MODE
   exit 0
 fi
-# Add logic to parse other command-line arguments as needed.
+
+# parse subcommands if used
+if [[ $# -ge 1 ]] ; then
+  key="$1"
+  # check for the createChannel subcommand
+  if [[ "$key" == "createChannel" ]]; then
+      export MODE="createChannel"
+      shift
+  # check for the cc command
+  elif [[ "$MODE" == "cc" ]]; then
+    if [ "$1" != "-h" ]; then
+      export SUBCOMMAND=$key
+      shift
+    fi
+  fi
+fi
+
+
+# parse flags
+
+while [[ $# -ge 1 ]] ; do
+  key="$1"
+  case $key in
+  -h )
+    printHelp $MODE
+    exit 0
+    ;;
+  -c )
+    CHANNEL_NAME="$2"
+    shift
+    ;;
+  -bft )
+    BFT=1
+    ;;
+  -ca )
+    CRYPTO="Certificate Authorities"
+    ;;
+  -cfssl )
+    CRYPTO="cfssl"
+    ;;
+  -r )
+    MAX_RETRY="$2"
+    shift
+    ;;
+  -d )
+    CLI_DELAY="$2"
+    shift
+    ;;
+  -s )
+    DATABASE="$2"
+    shift
+    ;;
+  -ccl )
+    CC_SRC_LANGUAGE="$2"
+    shift
+    ;;
+  -ccn )
+    CC_NAME="$2"
+    shift
+    ;;
+  -ccv )
+    CC_VERSION="$2"
+    shift
+    ;;
+  -ccs )
+    CC_SEQUENCE="$2"
+    shift
+    ;;
+  -ccp )
+    CC_SRC_PATH="$2"
+    shift
+    ;;
+  -ccep )
+    CC_END_POLICY="$2"
+    shift
+    ;;
+  -cccg )
+    CC_COLL_CONFIG="$2"
+    shift
+    ;;
+  -cci )
+    CC_INIT_FCN="$2"
+    shift
+    ;;
+  -ccaasdocker )
+    CCAAS_DOCKER_RUN="$2"
+    shift
+    ;;
+  -verbose )
+    VERBOSE=true
+    ;;
+  -org )
+    ORG="$2"
+    shift
+    ;;
+  -i )
+    IMAGETAG="$2"
+    shift
+    ;;
+  -cai )
+    CA_IMAGETAG="$2"
+    shift
+    ;;
+  -ccic )
+    CC_INVOKE_CONSTRUCTOR="$2"
+    shift
+    ;;
+  -ccqc )
+    CC_QUERY_CONSTRUCTOR="$2"
+    shift
+    ;;    
+  * )
+    errorln "Unknown flag: $key"
+    printHelp
+    exit 1
+    ;;
+  esac
+  shift
+done
+
+## Check if user attempts to use BFT orderer and CA together
+if [[ $BFT -eq 1 && "$CRYPTO" == "Certificate Authorities" ]]; then
+  fatalln "This sample does not yet support the use of consensus type BFT and CA together."
+fi
+
+if [ $BFT -eq 1 ]; then
+  export FABRIC_CFG_PATH=${PWD}/bft-config
+  COMPOSE_FILE_BASE=compose-bft-test-net.yaml
+fi
+
+# Are we generating crypto material with this command?
+if [ ! -d "organizations/peerOrganizations" ]; then
+  CRYPTO_MODE="with crypto from '${CRYPTO}'"
+else
+  CRYPTO_MODE=""
+fi
 
 # Determine mode of operation and printing out what we asked for
-if [ "$MODE" == "up" ]; then
-  infoln "Starting network with new configuration"
+if [ "$MODE" == "prereq" ]; then
+  infoln "Installing binaries and fabric images. Fabric Version: ${IMAGETAG}  Fabric CA Version: ${CA_IMAGETAG}"
+  installPrereqs
+elif [ "$MODE" == "up" ]; then
+  infoln "Starting nodes with CLI timeout of '${MAX_RETRY}' tries and CLI delay of '${CLI_DELAY}' seconds and using database '${DATABASE}' ${CRYPTO_MODE}"
   networkUp
 elif [ "$MODE" == "createChannel" ]; then
-  infoln "Creating new channels"
-  createChannel
+  infoln "Creating channel '${CHANNEL_NAME}'."
+  infoln "If network is not up, starting nodes with CLI timeout of '${MAX_RETRY}' tries and CLI delay of '${CLI_DELAY}' seconds and using database '${DATABASE} ${CRYPTO_MODE}"
+  createChannel $BFT
 elif [ "$MODE" == "down" ]; then
   infoln "Stopping network"
   networkDown
-# Add other modes as needed
+elif [ "$MODE" == "restart" ]; then
+  infoln "Restarting network"
+  networkDown
+  networkUp
+elif [ "$MODE" == "deployCC" ]; then
+  infoln "deploying chaincode on channel '${CHANNEL_NAME}'"
+  deployCC
+elif [ "$MODE" == "deployCCAAS" ]; then
+  infoln "deploying chaincode-as-a-service on channel '${CHANNEL_NAME}'"
+  deployCCAAS
+elif [ "$MODE" == "cc" ] && [ "$SUBCOMMAND" == "package" ]; then
+  packageChaincode
+elif [ "$MODE" == "cc" ] && [ "$SUBCOMMAND" == "list" ]; then
+  listChaincode
+elif [ "$MODE" == "cc" ] && [ "$SUBCOMMAND" == "invoke" ]; then
+  invokeChaincode
+elif [ "$MODE" == "cc" ] && [ "$SUBCOMMAND" == "query" ]; then
+  queryChaincode
 else
   printHelp
   exit 1
 fi
-
