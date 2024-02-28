@@ -284,6 +284,10 @@ After setting the environment variable, you can rerun your docker-compose comman
 docker-compose -f compose/docker/docker-compose-ca.yaml -f compose/docker/docker-compose-test-net.yaml up -d
 ```
 
+Your output in the terminal should look like this:
+
+![Alt Text](https://github.com/sigridveronica/HLF-FAL2/blob/main/Images/output%20docker-ps-.png)
+
 > [!note]  
 > If you encounter issues, check the Docker logs for your containers to identify any errors in the configuration or startup process.
 > This guide provides a high-level overview of the steps required to include new organizations in your Hyperledger Fabric network using Docker Compose. Depending on your specific requirements, additional configuration or adjustments may be necessary.
