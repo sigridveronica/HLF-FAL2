@@ -408,7 +408,7 @@ Each organization participating in the channel must approve the smart contract. 
 peer lifecycle chaincode approveformyorg --channelID ChannelOEM --name oemContract --version 1 --package-id <PackageID> --sequence 1 --init-required
 ```
 > [!note]
->  <PackageID> is returned by the install command and is unique to the chaincode package on each peer.
+>  "PackageID" is returned by the install command and is unique to the chaincode package on each peer.
 
 **5. Committing the Smart Contract to the Channel**
 
