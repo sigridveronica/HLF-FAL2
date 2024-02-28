@@ -520,7 +520,25 @@ Ensure that each activity entry and asset transfer is validated by peers. This c
 
 After implementing the smart contracts, deploy them to your Hyperledger Fabric network. Test the workflow by invoking the smart contract functions and verifying that the asset moves through the stations as expected, with all activities being recorded and validated.
 
+**COMMANDS**
 
+> [!warning]  
+> TO PROPERLY RUN, YOU MUST BE INSIDE THE CHAINCODE FOLDER WHERE YOU HAVE THE .go file 
+
+```diff
+@@ go mod init <module name>
+```
+
+```bash
+go mod init oemChaincode.go
+```
+Add Dependencies: If your chaincode depends on external packages, such as Hyperledger Fabric's contract API, you'll need to add them to your module. Usually, running go build or go test inside the module directory automatically adds required dependencies to your go.mod file. However, you can also manually add dependencies by running:
+```fine
+@@ go get <dependency>
+```
+```bash
+go get github.com/hyperledger/fabric-contract-api-go@latest
+``
 
 
 
