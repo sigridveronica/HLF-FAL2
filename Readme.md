@@ -271,7 +271,15 @@ ca_oem:
 
 **Final Steps**
 Review and Validate: After making these changes, review your Docker Compose files to ensure that all services are correctly defined and that there are no conflicts in names, ports, or volumes.
-Start the Network: Use docker-compose -f docker-compose-test-net.yaml -f docker-compose-ca.yaml up -d to start your network with the new configuration.
+Start the Network: 
+Run the following command to start your network with the new configuration: 
+```json
+WARNING: FROM TEST-NETWORK
+```
+```json
+docker-compose -f compose/docker/docker-compose-ca.yaml -f compose/docker/docker-compose-test-net.yaml up -d
+```
+
 Troubleshooting: If you encounter issues, check the Docker logs for your containers to identify any errors in the configuration or startup process.
 This guide provides a high-level overview of the steps required to include new organizations in your Hyperledger Fabric network using Docker Compose. Depending on your specific requirements, additional configuration or adjustments may be necessary.
 
