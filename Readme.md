@@ -322,7 +322,34 @@ done
 # Similar steps for Channel Supplier-OEM
 ```
 
-**Step 5: Bring Up the Network** 
+**Step 5: Update network.sh**
+To adapt the network.sh script for your network configuration involving three organizations (Supplier, Airline, OEM) with specific peers and channels, you'll need to make several modifications. 
+
+- Organization and Peer Configuration
+You need to modify the script to recognize three organizations with their respective peers. This involves adjusting the createOrgs function to generate crypto material for all three organizations and their peers. 
+
+OEM with 5 peers: QA1.1, QA1.2, SW1.1, SW1.2, SW1.3
+Supplier with 1 peer: QA2.1
+Airline with 1 peer: QA3.1
+-Channel Creation and Management
+Modify the createChannel function to create three channels (OEM, Airline-OEM, Supplier-OEM) instead of the default one. You will need to use the configtxgen tool to generate the channel creation transaction and update the script to create and manage these channels.
+
+-Joining Peers to Channels
+Adjust the script to join the correct peers to each channel. This involves modifying the logic that handles peer joining post-channel creation. Ensure that:
+
+All 5 OEM peers join the OEM channel.
+QA1.2 (OEM) and QA3.1 (Airline) join the Airline-OEM channel.
+QA2.1 (Supplier) and QA1.2 (OEM) join the Supplier-OEM channel.
+- Chaincode Deployment
+If deploying chaincodes to these channels, modify the deployCC or deployCCAAS functions to target the correct channels and peers. This includes specifying the correct chaincode package, policy, and initialization parameters for each deployment.
+
+-Network Cleanup and Reset
+Ensure the networkDown function correctly cleans up all artifacts related to your three organizations and their channels. This is crucial for resetting the network state during testing or after network shutdown.
+
+
+
+
+**5.2 Bring Up the Network** 
 Once you've made the necessary updates, you can use the network.sh script to bring up your network. Since you've modified the organizations, ensure you also update any flags or parameters you pass to the script to reflect your new setup.
 
 ```bash
