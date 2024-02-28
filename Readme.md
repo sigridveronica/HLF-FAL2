@@ -553,10 +553,53 @@ ls ${FABRIC_CFG_PATH}
 ```
 *This command should list the core.yaml among other configuration files. If the file is not present, you'll need to locate it and ensure it's in the correct directory.*
 
-With the FABRIC_CFG_PATH correctly set and pointing to a directory containing the core.yaml file, retry packaging your chaincode:
+**1.Package your chaincode**
 ```bash
 peer lifecycle chaincode package oemContract.tar.gz --path ./chaincode/oemContract/ --lang golang --label oemContract_1
 ```
+**2.Install the chaincode package on all the peers**
+
+You need to install the chaincode package on all peers that will execute and endorse the chaincode. Use the following command to install the chaincode:
+```bash
+peer lifecycle chaincode install oemContract.tar.gz
+```
+*This command will return a package ID, which is needed for the next steps. The package ID is a combination of the label you specified when packaging the chaincode and a hash of the package contents, for example, oemContract_1:74aaf6c776....*
+
+**3.Approve the Chaincode Definition for Your Organization**
+
+Before a chaincode can be committed to a channel, it must be approved by a sufficient number of organizations according to the channel's lifecycle policy. To approve the chaincode definition for your organization, use the following command:
+```bash
+peer lifecycle chaincode approveformyorg --channelID mychannel --name oemContract --version 1 --package-id oemContract_1:74aaf6c776... --sequence 1 --tls --cafile $ORDERER_CA --orderer orderer.example.com:7050
+```
+```json
+Replace mychannel with the name of your channel, oemContract_1:74aaf6c776... with the actual package ID returned by the install command, and adjust the --orderer and --cafile flags according to your network configuration.
+```
+**3.Check Commit Readiness (Optional)**
+
+Before committing the chaincode definition to the channel, you can check whether the required organizations have approved the definition:
+```bash
+peer lifecycle chaincode checkcommitreadiness --channelID mychannel --name oemContract --version 1 --sequence 1 --tls --cafile $ORDERER_CA --output json
+```
+This command returns a JSON payload that indicates whether each organization in the channel has approved the proposed chaincode definition.
+
+**Commit the Chaincode Definition to the Channel**
+
+Once the necessary organizations have approved the chaincode definition, any organization can commit it to the channel:
+
+```bash
+
+peer lifecycle chaincode commit -o orderer.example.com:7050 --channelID mychannel --name oemContract --version 1 --sequence 1 --tls --cafile $ORDERER_CA --peerAddresses peer0.org1.example.com:7051 --peerAddresses peer0.org2.example.com:9051
+```
+*Adjust the --peerAddresses flags to include the peers from all required organizations according to your channel's endorsement policy.*
+
+**Step 5: Verify the Chaincode is Committed**
+
+Finally, you can verify that the chaincode has been successfully committed to the channel:
+```bash
+peer lifecycle chaincode querycommitted --channelID mychannel --name oemContract --cafile $ORDERER_CA
+```
+This command will list the committed chaincode definitions on the channel, including the version, sequence, and endorsement policy.
+
 
 
 
