@@ -432,15 +432,93 @@ This guide provides a high-level overview of deploying a smart contract to a spe
 ```
 
 
+**Writing the Smart Contract*
+To create a smart contract structure that simulates the transfer of an aircraft (Asset) through different stations within the OEM organization, you can follow a modular approach. This involves defining a smart contract for each activity (Drill for engine allocation, Add engines, Coating+Finishing for delivery) with the specified attributes. Here's a conceptual outline based on the provided structure and the existing asset_transfer.go smart contract as a reference.
 
+**Step 1: Define the Asset and Activity Structures**
 
+First, define the structures for the Asset and the Activity. Each activity will have its own set of attributes as specified.
+```go
+package chaincode
 
+import (
+    "encoding/json"
+    "fmt"
+    "github.com/hyperledger/fabric-contract-api-go/contractapi"
+)
 
+// Asset represents the aircraft being assembled
+type Asset struct {
+    ACNumber string `json:"acNumber"` // Aircraft number
+}
 
+// Activity represents an activity in the assembly line
+type Activity struct {
+    ActivityID       string `json:"activityID"`
+    StartTime        string `json:"startTime"`
+    EndTime          string `json:"endTime"`
+    StationNumber    int    `json:"stationNumber"`
+    MachineID        string `json:"machineID"`
+    ToolsOrDrill     string `json:"toolsOrDrill"`
+    PartsID          string `json:"partsID"` // Part Number (P/N)
+    WorkerID         string `json:"workerID"`
+    StationResponsible string `json:"stationResponsible"`
+    PreviousStation  string `json:"previousStation"`
+    NextStation      string `json:"nextStation"`
+}
+```
+**Step 2: Implement Activity Functions**
 
+For each activity, implement a function that creates an entry for the activity. Here's an example for the "Drill for engine allocation" activity:
 
+```go
+// CreateDrillActivity creates an entry for the Drill activity
+func (s *SmartContract) CreateDrillActivity(ctx contractapi.TransactionContextInterface, activityID string, startTime string, endTime string, stationNumber int, machineID string, toolsOrDrill string, partsID string, workerID string, stationResponsible string, previousStation string, nextStation string) error {
+    activity := Activity{
+        ActivityID:       activityID,
+        StartTime:        startTime,
+        EndTime:          endTime,
+        StationNumber:    stationNumber,
+        MachineID:        machineID,
+        ToolsOrDrill:     toolsOrDrill,
+        PartsID:          partsID,
+        WorkerID:         workerID,
+        StationResponsible: stationResponsible,
+        PreviousStation:  previousStation,
+        NextStation:      nextStation,
+    }
 
+    activityJSON, err := json.Marshal(activity)
+    if err != nil {
+        return fmt.Errorf("failed to marshal activity: %v", err)
+    }
 
+    // Use a composite key to uniquely identify the activity
+    activityKey, err := ctx.GetStub().CreateCompositeKey("Activity", []string{activityID})
+    if err != nil {
+        return fmt.Errorf("failed to create composite key: %v", err)
+    }
+
+    return ctx.GetStub().PutState(activityKey, activityJSON)
+}
+```
+**Step 3: Transfer Asset to Next Station**
+Implement a function to transfer the asset to the next station. This function updates the asset's current station and validates the transfer with peers.
+
+```go
+// TransferAssetToNextStation transfers the asset to the next station
+func (s *SmartContract) TransferAssetToNextStation(ctx contractapi.TransactionContextInterface, acNumber string, nextStation string) error {
+    // Implementation for transferring the asset and validation
+}
+
+```
+**Step 4: Validation by Peers**
+
+Ensure that each activity entry and asset transfer is validated by peers. This can be achieved through endorsement policies in Hyperledger Fabric, where you specify which organizations' peers need to endorse a transaction.
+
+**Step 5: Deploy and Test**
+
+After implementing the smart contracts, deploy them to your Hyperledger Fabric network. Test the workflow by invoking the smart contract functions and verifying that the asset moves through the stations as expected, with all activities being recorded and validated.
 
 
 
