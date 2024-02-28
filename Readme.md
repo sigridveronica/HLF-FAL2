@@ -293,7 +293,34 @@ Your output in the terminal should look like this:
 > This guide provides a high-level overview of the steps required to include new organizations in your Hyperledger Fabric network using Docker Compose. Depending on your specific requirements, additional configuration or adjustments may be necessary.
 
 
+**Step 4: Update the network.sh Script**
 
+The network.sh script is used to bring up the network, create channels, and deploy chaincode. You'll need to modify this script to handle your new organizations.
+
+**4.1.1 Modify network.sh:** 
+Update the script to include your new organizations when bringing up the network, creating channels, and setting anchor peers. This might involve significant changes, depending on how different your setup is from the default.
+
+```yaml
+# Define organizations and peers
+ORG1_PEERS=("QA1.1.oem.example.com" "QA1.2.oem.example.com")
+ORG2_PEERS=("QA2.1.supplier.example.com")
+ORG3_PEERS=("QA3.1.airline.example.com")
+
+# Create Channel OEM
+./network.sh createChannel -c channelOEM
+# Join OEM peers to Channel OEM
+for peer in "${ORG1_PEERS[@]}"; do
+    ./network.sh joinChannel -c channelOEM -p $peer
+done
+
+# Create Channel Airline-OEM
+./network.sh createChannel -c channelAirlineOEM
+# Join relevant peers
+./network.sh joinChannel -c channelAirlineOEM -p "QA1.2.oem.example.com"
+./network.sh joinChannel -c channelAirlineOEM -p "QA3.1.airline.example.com"
+
+# Similar steps for Channel Supplier-OEM
+``
 
 
 
