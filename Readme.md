@@ -539,7 +539,6 @@ Add Dependencies: If your chaincode depends on external packages, such as Hyperl
 ```bash
 go get github.com/hyperledger/fabric-contract-api-go@latest
 ```
-**Instantiate chaincode**
 
 > [!warning]  
 > GO BACK TO TEST-NETWORK
