@@ -206,6 +206,66 @@ in your case
 ```bash
 configtxgen -profile OEMChannel -outputBlock ./channel-artifacts/genesis.block -channelID system-channel
 ```
+
+**Step 3: Update Docker Compose Files**
+
+3.1. Update docker-compose-test-net.yaml
+
+3.1.1 Add New Peer Services: For each new organization, you need to define peer services similar to those for peer0.org1.example.com and peer0.org2.example.com. Use the provided service definitions as a template. For example, to add a peer for the OEM organization, you might add:
+
+```yaml
+peer0.oem.example.com:
+  container_name: peer0.oem.example.com
+  image: hyperledger/fabric-peer:latest
+  labels:
+    service: hyperledger-fabric
+  environment:
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=fabric_test
+  volumes:
+    - ./docker/peercfg:/etc/hyperledger/peercfg
+    - ${DOCKER_SOCK}:/host/var/run/docker.sock
+```
+3.1.2 Repeat for Other Organizations: Repeat the above step for each peer of the Airline and Supplier organizations, adjusting the service names and container names accordingly (e.g., peer0.airline.example.com, peer0.supplier.example.com).
+
+3.2 Update docker-compose-ca.yaml
+If you're using separate CA services for each organization (which is a common practice for managing identities and permissions within Hyperledger Fabric networks), you'll need to add services for the CAs of your new organizations in the docker-compose-ca.yaml file. This file might not be explicitly mentioned in the summaries, but it's commonly used for defining Certificate Authorities in Fabric networks.
+
+3.2.1 Define CA Services: For each new organization, define a CA service. You can base your definitions on any existing CA service definitions, modifying them to suit your new organizations. For example:
+```yaml
+ca_oem:
+  image: hyperledger/fabric-ca:latest
+  environment:
+    - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+    - FABRIC_CA_SERVER_CA_NAME=ca-oem
+  ports:
+    - "7054:7054"
+  command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+  volumes:
+    - ./fabric-ca/oem:/etc/hyperledger/fabric-ca-server
+```
+3.2.2 Adjust Ports and Volumes: Make sure to adjust the ports and volume paths for each CA service to avoid conflicts and ensure that each organization's data is stored separately.
+
+3.3 Network and Volume Definitions
+- Network: Ensure all your services are defined to use the same network (e.g., fabric_test). This might involve setting networks at the bottom of your Docker Compose file and ensuring each service is attached to it.
+- Volumes: Adjust volume paths as necessary to ensure that configuration files, certificates, and other data are correctly mapped into your containers.
+
+**Final Steps**
+Review and Validate: After making these changes, review your Docker Compose files to ensure that all services are correctly defined and that there are no conflicts in names, ports, or volumes.
+Start the Network: Use docker-compose -f docker-compose-test-net.yaml -f docker-compose-ca.yaml up -d to start your network with the new configuration.
+Troubleshooting: If you encounter issues, check the Docker logs for your containers to identify any errors in the configuration or startup process.
+This guide provides a high-level overview of the steps required to include new organizations in your Hyperledger Fabric network using Docker Compose. Depending on your specific requirements, additional configuration or adjustments may be necessary.
+
+
+
+
+
+
+```json
+################
+```
+
+
 2.3.2: Create Channel Transaction for OEMChannel
 
 For each channel, you need to create a channel configuration transaction. This defines the initial configuration of the channel, including which organizations are members.
