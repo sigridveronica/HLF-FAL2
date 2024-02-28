@@ -320,7 +320,14 @@ done
 ./network.sh joinChannel -c channelAirlineOEM -p "QA3.1.airline.example.com"
 
 # Similar steps for Channel Supplier-OEM
-``
+```
+
+**Step 5: Bring Up the Network** 
+Once you've made the necessary updates, you can use the network.sh script to bring up your network. Since you've modified the organizations, ensure you also update any flags or parameters you pass to the script to reflect your new setup.
+
+```bash
+./network.sh up
+```
 
 
 
