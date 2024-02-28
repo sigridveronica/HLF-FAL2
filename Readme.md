@@ -273,10 +273,10 @@ ca_oem:
 Review and Validate: After making these changes, review your Docker Compose files to ensure that all services are correctly defined and that there are no conflicts in names, ports, or volumes.
 Start the Network: 
 Run the following command to start your network with the new configuration: 
+> [!warning]  
+> From test-network
+
 ```json
-WARNING: FROM TEST-NETWORK
-```
-```html
 docker-compose -f compose/docker/docker-compose-ca.yaml -f compose/docker/docker-compose-test-net.yaml up -d
 ```
 
