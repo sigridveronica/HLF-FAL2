@@ -369,6 +369,83 @@ Once you've made the necessary updates, you can use the network.sh script to bri
 ./network.sh up
 ```
 
+**Writing the Smart Contract**
+First, you need to write your smart contract code. Let's assume you're writing a smart contract in Go for simplicity, but you can use other supported languages like JavaScript or Java.
+
+Create a directory for your smart contract code. For example, if your smart contract is named oemContract, you might create a directory structure like this:
+```bash
+chaincode/
+└── oemContract/
+    ├── go.mod
+    ├── go.sum
+    └── oemContract.go
+```
+Inside oemContract.go, you'll define the logic for your smart contract. 
+
+**2. Packaging the Smart Contract**
+
+
+Use the peer lifecycle chaincode package command to package your smart contract. This step is done from a machine that has access to the Hyperledger Fabric binaries.
+
+```bash
+peer lifecycle chaincode package oemContract.tar.gz --path ./chaincode/oemContract/ --lang golang --label oemContract_1
+```
+
+**3. Installing the Smart Contract**
+
+
+Install the smart contract on the relevant peers. Since Channel OEM involves all 5 peers of the OEM organization, you'll need to install the chaincode on each of these peers. You'll use the peer lifecycle chaincode install command for this:
+
+```bash
+peer lifecycle chaincode install oemContract.tar.gz
+```
+
+**4. Approving the Smart Contract for the Channel**
+
+Each organization participating in the channel must approve the smart contract. This is done using the peer lifecycle chaincode approveformyorg command.
+
+```bash
+peer lifecycle chaincode approveformyorg --channelID ChannelOEM --name oemContract --version 1 --package-id <PackageID> --sequence 1 --init-required
+```
+> [!note]
+>  <PackageID> is returned by the install command and is unique to the chaincode package on each peer.
+
+**5. Committing the Smart Contract to the Channel**
+
+After all organizations have approved the smart contract, any organization can commit it to the channel using the peer lifecycle chaincode commit command.
+
+```bash
+peer lifecycle chaincode commit --channelID ChannelOEM --name oemContract --version 1 --sequence 1 --init-required
+```
+
+***6. Initializing the Smart Contract (Optional)***
+
+If your smart contract requires initialization, you can do so after committing it.
+```json
+peer chaincode invoke -o <OrdererAddress> --isInit --channelID ChannelOEM --name oemContract -c '{"function":"InitLedger","Args":[]}'
+```
+```json
+REMOVE THIS IS CHATGPT
+Replace <OrdererAddress> with the address of your orderer.
+
+This guide provides a high-level overview of deploying a smart contract to a specific channel in your modified network. Repeat similar steps for deploying smart contracts to other channels, adjusting the peers and channel names as necessary.
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ```json
