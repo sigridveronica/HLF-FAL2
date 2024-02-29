@@ -243,6 +243,7 @@ function networkUp() {
 }
 # call the script to create the channel, join the peers of org1 and org2,
 # and then update the anchor peers for each organization
+
 function createChannel() {
   bringUpNetwork="false"
 
@@ -424,3 +425,4 @@ else
   printHelp
   exit 1
 fi
+

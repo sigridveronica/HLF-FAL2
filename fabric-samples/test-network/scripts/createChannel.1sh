@@ -30,40 +30,23 @@ fi
 
 createChannelGenesisBlock() {
   setGlobals 1
-  which configtxgen
-  if [ "$?" -ne 0 ]; then
-    fatalln "configtxgen tool not found."
-  fi
-  local channel_name=$1
-  local profile_name="" # Initialize profile_name as an empty string
+	which configtxgen
+	if [ "$?" -ne 0 ]; then
+		fatalln "configtxgen tool not found."
+	fi
+	local bft_true=$1
+	set -x
 
-  # Convert channel_name to uppercase for comparison
-  local upper_channel_name=$(echo "$channel_name" | tr '[:lower:]' '[:upper:]')
-
-  set -x
-
-  # Determine the profile name based on the channel name
-  case "$upper_channel_name" in
-    "OEMCHANNEL")
-      profile_name="OEMChannel"
-      ;;
-    "AIRLINEOEMCHANNEL")
-      profile_name="AirlineOEMChannel"
-      ;;
-    "SUPPLIEROEMCHANNEL")
-      profile_name="SupplierOEMChannel"
-      ;;
-    *)
-      fatalln "Unknown channel name: $channel_name"
-      ;;
-  esac
-
-  # Generate the channel configuration block using the determined profile
-  configtxgen -profile $profile_name -outputBlock ./channel-artifacts/${channel_name}.block -channelID $channel_name
-  res=$?
-  { set +x; } 2>/dev/null
+	if [ $bft_true -eq 1 ]; then
+		configtxgen -profile ChannelUsingBFT -outputBlock ./channel-artifacts/${CHANNEL_NAME}.block -channelID $CHANNEL_NAME
+	else
+		configtxgen -profile ChannelUsingRaft -outputBlock ./channel-artifacts/${CHANNEL_NAME}.block -channelID $CHANNEL_NAME
+	fi
+	res=$?
+	{ set +x; } 2>/dev/null
   verifyResult $res "Failed to generate channel configuration transaction..."
 }
+
 createChannel() {
 	# Poll in case the raft leader is not set yet
 	local rc=1
