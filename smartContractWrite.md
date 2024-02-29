@@ -1,4 +1,9 @@
 ## CHANNELS AND SMART CONTRACT MANAGEMENT:
+
+### Summary
+> The sequence is as follows: Define your network configuration in configtx2.yml → Generate network artifacts using configtxgen → Create channels with ./network.sh createChannel → > > > Join  peers to the channel → Optionally update anchor peers → Deploy chaincode.
+
+
 You need to update different files:
 ```bash
 chaincode/
