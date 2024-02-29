@@ -263,6 +263,12 @@ function createChannel() {
     infoln "Bringing up network"
     networkUp
   fi
+  
+  # Ensure CHANNEL_NAME is provided as an argument
+  if [ -z "$CHANNEL_NAME" ]; then
+    fatalln "Channel name not provided. Use: ./network.sh createChannel <CHANNEL_NAME>"
+  fi
+
   # now run the script that creates a channel. This script uses configtxgen once
   # to create the channel creation transaction and the anchor peer updates.
   scripts/createChannel.sh $CHANNEL_NAME $CLI_DELAY $MAX_RETRY $VERBOSE
