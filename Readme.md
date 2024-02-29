@@ -349,6 +349,8 @@ Ensure the networkDown function correctly cleans up all artifacts related to you
 
 For each channel, you need to create a channel configuration transaction. This defines the initial configuration of the channel, including which organizations are members.
 For the OEM channel, you've already created the genesis block which acts as the initial configuration. For the Airline-OEM and Supplier-OEM channels, you'll need to create configuration transactions.
+> [!Warning]
+>  DO NOT copy paste this, it's part of the yaml file, not a command to paste on the terminal
 
 ```yaml
 configtxgen -profile OEMChannel -outputCreateChannelTx ./channel-artifacts/OEMChannel.tx -channelID oemchannel
@@ -369,7 +371,20 @@ Once you've made the necessary updates, you can use the network.sh script to bri
 ./network.sh up
 ```
 
-**Writing the Smart Contract**
+## CHANNELS AND SMART CONTRACT MANAGEMENT:
+You need to update different files:
+```bash
+chaincode/
+└── oemContract/
+    ├── go.mod
+    ├── go.sum
+    └── oemContract.go
+```
+Also, modify SetOrgEnv.sh
+Create, for each channel: deployOEMChaincode.sh, invokeOEMChaincode.sh
+
+## Writing the Smart Contract
+
 First, you need to write your smart contract code. Let's assume you're writing a smart contract in Go for simplicity, but you can use other supported languages like JavaScript or Java.
 
 Create a directory for your smart contract code. For example, if your smart contract is named oemContract, you might create a directory structure like this:
@@ -382,7 +397,7 @@ chaincode/
 ```
 Inside oemContract.go, you'll define the logic for your smart contract. 
 
-**2. Packaging the Smart Contract**
+### 2. Packaging the Smart Contract
 
 
 Use the peer lifecycle chaincode package command to package your smart contract. This step is done from a machine that has access to the Hyperledger Fabric binaries.
@@ -391,7 +406,7 @@ Use the peer lifecycle chaincode package command to package your smart contract.
 peer lifecycle chaincode package oemContract.tar.gz --path ./chaincode/oemContract/ --lang golang --label oemContract_1
 ```
 
-**3. Installing the Smart Contract**
+### 3. Installing the Smart Contract**
 
 
 Install the smart contract on the relevant peers. Since Channel OEM involves all 5 peers of the OEM organization, you'll need to install the chaincode on each of these peers. You'll use the peer lifecycle chaincode install command for this:
@@ -432,7 +447,7 @@ This guide provides a high-level overview of deploying a smart contract to a spe
 ```
 
 
-**Writing the Smart Contract*
+### Writing the Smart Contract
 To create a smart contract structure that simulates the transfer of an aircraft (Asset) through different stations within the OEM organization, you can follow a modular approach. This involves defining a smart contract for each activity (Drill for engine allocation, Add engines, Coating+Finishing for delivery) with the specified attributes. Here's a conceptual outline based on the provided structure and the existing asset_transfer.go smart contract as a reference.
 
 **Step 1: Define the Asset and Activity Structures**
