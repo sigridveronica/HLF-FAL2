@@ -2,11 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-
-
-
-# default to using Org1
-ORG=${1:-Org1}
+# default to using OEM
+ORG=${1:-OEM}
 
 # Exit on first error, print all commands.
 set -e
@@ -15,42 +12,45 @@ set -o pipefail
 # Where am I?
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
+# Define CA certificates for each organization
 ORDERER_CA=${DIR}/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
-PEER0_ORG1_CA=${DIR}/test-network/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
-PEER0_ORG2_CA=${DIR}/test-network/organizations/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
-PEER0_ORG3_CA=${DIR}/test-network/organizations/peerOrganizations/org3.example.com/tlsca/tlsca.org3.example.com-cert.pem
+PEER_QA1_1_CA=${DIR}/test-network/organizations/peerOrganizations/oem.example.com/tlsca/tlsca.oem.example.com-cert.pem
+PEER_QA2_1_CA=${DIR}/test-network/organizations/peerOrganizations/supplier.example.com/tlsca/tlsca.supplier.example.com-cert.pem
+PEER_QA3_1_CA=${DIR}/test-network/organizations/peerOrganizations/airline.example.com/tlsca/tlsca.airline.example.com-cert.pem
 
+# Convert ORG to lowercase using tr for compatibility
+org_lower=$(echo "$ORG" | tr '[:upper:]' '[:lower:]')
 
-if [[ ${ORG,,} == "org1" || ${ORG,,} == "digibank" ]]; then
+# Set environment variables based on organization
+if [[ $org_lower == "oem" ]]; then
+   CORE_PEER_LOCALMSPID=OEMMSP
+   CORE_PEER_MSPCONFIGPATH=${DIR}/test-network/organizations/peerOrganizations/oem.example.com/users/Admin@oem.example.com/msp
+   CORE_PEER_ADDRESS=localhost:7051 # Assuming QA1.1 is running on this port
+   CORE_PEER_TLS_ROOTCERT_FILE=${PEER_QA1_1_CA}
 
-   CORE_PEER_LOCALMSPID=Org1MSP
-   CORE_PEER_MSPCONFIGPATH=${DIR}/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-   CORE_PEER_ADDRESS=localhost:7051
-   CORE_PEER_TLS_ROOTCERT_FILE=${DIR}/test-network/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
+elif [[ $org_lower == "supplier" ]]; then
+   CORE_PEER_LOCALMSPID=SupplierMSP
+   CORE_PEER_MSPCONFIGPATH=${DIR}/test-network/organizations/peerOrganizations/supplier.example.com/users/Admin@supplier.example.com/msp
+   CORE_PEER_ADDRESS=localhost:8051 # Assuming QA2.1 is running on this port
+   CORE_PEER_TLS_ROOTCERT_FILE=${PEER_QA2_1_CA}
 
-elif [[ ${ORG,,} == "org2" || ${ORG,,} == "magnetocorp" ]]; then
-
-   CORE_PEER_LOCALMSPID=Org2MSP
-   CORE_PEER_MSPCONFIGPATH=${DIR}/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp
-   CORE_PEER_ADDRESS=localhost:9051
-   CORE_PEER_TLS_ROOTCERT_FILE=${DIR}/test-network/organizations/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
+elif [[ $org_lower == "airline" ]]; then
+   CORE_PEER_LOCALMSPID=AirlineMSP
+   CORE_PEER_MSPCONFIGPATH=${DIR}/test-network/organizations/peerOrganizations/airline.example.com/users/Admin@airline.example.com/msp
+   CORE_PEER_ADDRESS=localhost:9051 # Assuming QA3.1 is running on this port
+   CORE_PEER_TLS_ROOTCERT_FILE=${PEER_QA3_1_CA}
 
 else
-   echo "Unknown \"$ORG\", please choose Org1/Digibank or Org2/Magnetocorp"
-   echo "For example to get the environment variables to set upa Org2 shell environment run:  ./setOrgEnv.sh Org2"
-   echo
-   echo "This can be automated to set them as well with:"
-   echo
-   echo 'export $(./setOrgEnv.sh Org2 | xargs)'
+   echo "Unknown \"$ORG\", please choose OEM, Supplier, or Airline"
    exit 1
 fi
 
-# output the variables that need to be set
+# Output the variables that need to be set
 echo "CORE_PEER_TLS_ENABLED=true"
 echo "ORDERER_CA=${ORDERER_CA}"
-echo "PEER0_ORG1_CA=${PEER0_ORG1_CA}"
-echo "PEER0_ORG2_CA=${PEER0_ORG2_CA}"
-echo "PEER0_ORG3_CA=${PEER0_ORG3_CA}"
+echo "PEER_QA1_1_CA=${PEER_QA1_1_CA}"
+echo "PEER_QA2_1_CA=${PEER_QA2_1_CA}"
+echo "PEER_QA3_1_CA=${PEER_QA3_1_CA}"
 
 echo "CORE_PEER_MSPCONFIGPATH=${CORE_PEER_MSPCONFIGPATH}"
 echo "CORE_PEER_ADDRESS=${CORE_PEER_ADDRESS}"
