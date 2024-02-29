@@ -129,8 +129,9 @@ FABRIC_CFG_PATH=${PWD}/configtx
 if [ $BFT -eq 1 ]; then
   FABRIC_CFG_PATH=${PWD}/bft-config
 fi
-createChannelGenesisBlock $BFT
 
+echo "Channel name before createChannelGenesisBlock: ${CHANNEL_NAME}"
+createChannelGenesisBlock $CHANNEL_NAME
 
 ## Create channel
 infoln "Creating channel ${CHANNEL_NAME}"

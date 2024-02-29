@@ -399,6 +399,63 @@ function networkDown() {
 }
 ###############################################################################################
 # Parse commandline args
+# ## Parse mode
+# if [[ $# -lt 1 ]] ; then
+#   printHelp
+#   exit 0
+# else
+#   MODE=$1
+#   shift
+# fi
+
+# ## if no parameters are passed, show the help for cc
+# if [ "$MODE" == "cc" ] && [[ $# -lt 1 ]]; then
+#   printHelp $MODE
+#   exit 0
+# fi
+# # Add logic to parse other command-line arguments as needed.
+
+# # Determine mode of operation and printing out what we asked for
+# if [ "$MODE" == "up" ]; then
+#   infoln "Starting network with new configuration"
+#   networkUp
+# elif [ "$MODE" == "createChannel" ]; then
+#   infoln "Creating new channels"
+#   createChannel
+# elif [ "$MODE" == "down" ]; then
+#   infoln "Stopping network"
+#   networkDown
+# # Add other modes as needed
+# else
+#   printHelp
+#   exit 1
+# fi
+
+### SIGRID ###
+
+. ./network.config
+
+# Existing Docker Compose files for the test network, CouchDB, and CAs
+COMPOSE_FILE_BASE=compose-test-net.yaml
+COMPOSE_FILE_COUCH=compose-couch.yaml
+COMPOSE_FILE_CA=compose-ca.yaml
+
+# New Docker Compose files for the new organizations
+COMPOSE_FILE_NEW_ORG_BASE=compose-new-org.yaml  # Replace 'new-org' with your organization's name
+COMPOSE_FILE_NEW_ORG_COUCH=compose-couch-new-org.yaml  # If using CouchDB
+COMPOSE_FILE_NEW_ORG_CA=compose-ca-new-org.yaml  # If using CAs
+
+# Rest of the script...
+
+# Get docker sock path from environment variable
+SOCK="${DOCKER_HOST:-/var/run/docker.sock}"
+DOCKER_SOCK="${SOCK##unix://}"
+
+# BFT activated flag
+BFT=0
+
+# Parse commandline args
+
 ## Parse mode
 if [[ $# -lt 1 ]] ; then
   printHelp
@@ -413,19 +470,175 @@ if [ "$MODE" == "cc" ] && [[ $# -lt 1 ]]; then
   printHelp $MODE
   exit 0
 fi
-# Add logic to parse other command-line arguments as needed.
+
+# parse subcommands if used
+if [[ $# -ge 1 ]] ; then
+  key="$1"
+  # check for the createChannel subcommand
+  if [[ "$key" == "createChannel" ]]; then
+      export MODE="createChannel"
+      shift
+  # check for the cc command
+  elif [[ "$MODE" == "cc" ]]; then
+    if [ "$1" != "-h" ]; then
+      export SUBCOMMAND=$key
+      shift
+    fi
+  fi
+fi
+
+
+# parse flags
+
+while [[ $# -ge 1 ]] ; do
+  key="$1"
+  case $key in
+  -h )
+    printHelp $MODE
+    exit 0
+    ;;
+  -c )
+    CHANNEL_NAME="$2"
+    shift
+    ;;
+  -bft )
+    BFT=1
+    ;;
+  -ca )
+    CRYPTO="Certificate Authorities"
+    ;;
+  -cfssl )
+    CRYPTO="cfssl"
+    ;;
+  -r )
+    MAX_RETRY="$2"
+    shift
+    ;;
+  -d )
+    CLI_DELAY="$2"
+    shift
+    ;;
+  -s )
+    DATABASE="$2"
+    shift
+    ;;
+  -ccl )
+    CC_SRC_LANGUAGE="$2"
+    shift
+    ;;
+  -ccn )
+    CC_NAME="$2"
+    shift
+    ;;
+  -ccv )
+    CC_VERSION="$2"
+    shift
+    ;;
+  -ccs )
+    CC_SEQUENCE="$2"
+    shift
+    ;;
+  -ccp )
+    CC_SRC_PATH="$2"
+    shift
+    ;;
+  -ccep )
+    CC_END_POLICY="$2"
+    shift
+    ;;
+  -cccg )
+    CC_COLL_CONFIG="$2"
+    shift
+    ;;
+  -cci )
+    CC_INIT_FCN="$2"
+    shift
+    ;;
+  -ccaasdocker )
+    CCAAS_DOCKER_RUN="$2"
+    shift
+    ;;
+  -verbose )
+    VERBOSE=true
+    ;;
+  -org )
+    ORG="$2"
+    shift
+    ;;
+  -i )
+    IMAGETAG="$2"
+    shift
+    ;;
+  -cai )
+    CA_IMAGETAG="$2"
+    shift
+    ;;
+  -ccic )
+    CC_INVOKE_CONSTRUCTOR="$2"
+    shift
+    ;;
+  -ccqc )
+    CC_QUERY_CONSTRUCTOR="$2"
+    shift
+    ;;    
+  * )
+    errorln "Unknown flag: $key"
+    printHelp
+    exit 1
+    ;;
+  esac
+  shift
+done
+
+## Check if user attempts to use BFT orderer and CA together
+if [[ $BFT -eq 1 && "$CRYPTO" == "Certificate Authorities" ]]; then
+  fatalln "This sample does not yet support the use of consensus type BFT and CA together."
+fi
+
+if [ $BFT -eq 1 ]; then
+  export FABRIC_CFG_PATH=${PWD}/bft-config
+  COMPOSE_FILE_BASE=compose-bft-test-net.yaml
+fi
+
+# Are we generating crypto material with this command?
+if [ ! -d "organizations/peerOrganizations" ]; then
+  CRYPTO_MODE="with crypto from '${CRYPTO}'"
+else
+  CRYPTO_MODE=""
+fi
 
 # Determine mode of operation and printing out what we asked for
-if [ "$MODE" == "up" ]; then
-  infoln "Starting network with new configuration"
+if [ "$MODE" == "prereq" ]; then
+  infoln "Installing binaries and fabric images. Fabric Version: ${IMAGETAG}  Fabric CA Version: ${CA_IMAGETAG}"
+  installPrereqs
+elif [ "$MODE" == "up" ]; then
+  infoln "Starting nodes with CLI timeout of '${MAX_RETRY}' tries and CLI delay of '${CLI_DELAY}' seconds and using database '${DATABASE}' ${CRYPTO_MODE}"
   networkUp
 elif [ "$MODE" == "createChannel" ]; then
-  infoln "Creating new channels"
-  createChannel
+  infoln "Creating channel '${CHANNEL_NAME}'."
+  infoln "If network is not up, starting nodes with CLI timeout of '${MAX_RETRY}' tries and CLI delay of '${CLI_DELAY}' seconds and using database '${DATABASE} ${CRYPTO_MODE}"
+  createChannel $BFT
 elif [ "$MODE" == "down" ]; then
   infoln "Stopping network"
   networkDown
-# Add other modes as needed
+elif [ "$MODE" == "restart" ]; then
+  infoln "Restarting network"
+  networkDown
+  networkUp
+elif [ "$MODE" == "deployCC" ]; then
+  infoln "deploying chaincode on channel '${CHANNEL_NAME}'"
+  deployCC
+elif [ "$MODE" == "deployCCAAS" ]; then
+  infoln "deploying chaincode-as-a-service on channel '${CHANNEL_NAME}'"
+  deployCCAAS
+elif [ "$MODE" == "cc" ] && [ "$SUBCOMMAND" == "package" ]; then
+  packageChaincode
+elif [ "$MODE" == "cc" ] && [ "$SUBCOMMAND" == "list" ]; then
+  listChaincode
+elif [ "$MODE" == "cc" ] && [ "$SUBCOMMAND" == "invoke" ]; then
+  invokeChaincode
+elif [ "$MODE" == "cc" ] && [ "$SUBCOMMAND" == "query" ]; then
+  queryChaincode
 else
   printHelp
   exit 1
