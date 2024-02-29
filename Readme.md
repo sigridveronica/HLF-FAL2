@@ -612,7 +612,52 @@ This command will list the committed chaincode definitions on the channel, inclu
 
 ****NETWORK UP AND RUNNING: DEPLOY CHAINCODE****
 
+Given the modifications we've made to the network setup, including the addition of new organizations, peers, and channels, you'll need to adjust the setOrgEnv.sh script to correctly set environment variables for your new organizational structure. 
 
+**Modifying setOrgEnv.sh**
+
+The setOrgEnv.sh script is likely setting environment variables based on the original network configuration, which includes Org1 and Org2. For your new setup, you need to modify this script to include your new organizations (Supplier, Airline, OEM) and their respective peers.
+
+Here's a general approach:
+
+- Define Environment Variables for Each Organization and Peer: For each of your organizations and their peers, you'll need to define environment variables. These variables typically include peer addresses, MSP (Membership Service Provider) IDs, and wallet paths for each peer.
+
+- Add Conditional Blocks for Each Organization: You can use conditional blocks (if-else statements) to set these environment variables based on the organization and peer being targeted. For example:
+
+```sh
+if [ "$ORG" == "OEM" ]; then
+    if [ "$PEER" == "QA1.1" ]; then
+        export CORE_PEER_ADDRESS=qa1.1.oem.example.com:7051
+        # Set other environment variables specific to QA1.1
+    elif [ "$PEER" == "QA1.2" ]; then
+        export CORE_PEER_ADDRESS=qa1.2.oem.example.com:7051
+        # Set other environment variables specific to QA1.2
+    fi
+    # Repeat for other peers
+elif [ "$ORG" == "Supplier" ]; then
+    if [ "$PEER" == "QA2.1" ]; then
+        export CORE_PEER_ADDRESS=qa2.1.supplier.example.com:7051
+        # Set other environment variables specific to QA2.1
+    fi
+elif [ "$ORG" == "Airline" ]; then
+    if [ "$PEER" == "QA3.1" ]; then
+        export CORE_PEER_ADDRESS=qa3.1.airline.example.com:7051
+        # Set other environment variables specific to QA3.1
+    fi
+fi
+```
+> [!Warning]   Update the Script Invocation: When you run scripts that depend on setOrgEnv.sh, ensure you're passing the correct organization and peer names as arguments or
+> environment variables, depending on how setOrgEnv.sh is set up to receive input.
+
+**Running Chaincode Commands**
+
+After updating the setOrgEnv.sh script, you should be able to run chaincode lifecycle commands without encountering the previous errors. Ensure you set the environment variables by sourcing setOrgEnv.sh with the correct parameters before running any peer lifecycle chaincode commands.
+
+For example, before packaging the chaincode for the OEM, you might run:
+```bash
+source setOrgEnv.sh OEM QA1.1
+peer lifecycle chaincode package oemContract.tar.gz --path ./chaincode/oemContract/ --lang golang --label oemContract_1
+```
 
 2.3.2: Create Channel Transaction for OEMChannel
 
