@@ -1,9 +1,4 @@
 #!/bin/bash
-#
-# Copyright IBM Corp All Rights Reserved
-#
-# SPDX-License-Identifier: Apache-2.0
-#
 
 # This is a collection of bash functions used by different scripts
 
@@ -12,9 +7,14 @@
 
 export CORE_PEER_TLS_ENABLED=true
 export ORDERER_CA=${PWD}/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
-export PEER0_ORG1_CA=${PWD}/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
-export PEER0_ORG2_CA=${PWD}/organizations/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
-export PEER0_ORG3_CA=${PWD}/organizations/peerOrganizations/org3.example.com/tlsca/tlsca.org3.example.com-cert.pem
+
+# Define an associative array for organization names and their CA files
+declare -A ORG_NAMES=( [1]="oem" [2]="supplier" [3]="airline" )
+declare -A ORG_CA_FILES=(
+    [1]="${PWD}/organizations/peerOrganizations/oem.example.com/tlsca/tlsca.oem.example.com-cert.pem"
+    [2]="${PWD}/organizations/peerOrganizations/supplier.example.com/tlsca/tlsca.supplier.example.com-cert.pem"
+    [3]="${PWD}/organizations/peerOrganizations/airline.example.com/tlsca/tlsca.airline.example.com-cert.pem"
+)
 
 # Set environment variables for the peer org
 setGlobals() {
@@ -24,22 +24,12 @@ setGlobals() {
   else
     USING_ORG="${OVERRIDE_ORG}"
   fi
-  infoln "Using organization ${USING_ORG}"
-  if [ $USING_ORG -eq 1 ]; then
-    export CORE_PEER_LOCALMSPID="Org1MSP"
-    export CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_ORG1_CA
-    export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-    export CORE_PEER_ADDRESS=localhost:7051
-  elif [ $USING_ORG -eq 2 ]; then
-    export CORE_PEER_LOCALMSPID="Org2MSP"
-    export CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_ORG2_CA
-    export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp
-    export CORE_PEER_ADDRESS=localhost:9051
-  elif [ $USING_ORG -eq 3 ]; then
-    export CORE_PEER_LOCALMSPID="Org3MSP"
-    export CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_ORG3_CA
-    export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp
-    export CORE_PEER_ADDRESS=localhost:11051
+  infoln "Using organization ${ORG_NAMES[$USING_ORG]}"
+  if [ -n "${ORG_NAMES[$USING_ORG]}" ]; then
+    export CORE_PEER_LOCALMSPID="${ORG_NAMES[$USING_ORG]}MSP"
+    export CORE_PEER_TLS_ROOTCERT_FILE=${ORG_CA_FILES[$USING_ORG]}
+    export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/${ORG_NAMES[$USING_ORG]}.example.com/users/Admin@${ORG_NAMES[$USING_ORG]}.example.com/msp
+    export CORE_PEER_ADDRESS=localhost:$((7051 + ($USING_ORG - 1) * 2000))
   else
     errorln "ORG Unknown"
   fi
@@ -59,37 +49,31 @@ setGlobalsCLI() {
   else
     USING_ORG="${OVERRIDE_ORG}"
   fi
-  if [ $USING_ORG -eq 1 ]; then
-    export CORE_PEER_ADDRESS=peer0.org1.example.com:7051
-  elif [ $USING_ORG -eq 2 ]; then
-    export CORE_PEER_ADDRESS=peer0.org2.example.com:9051
-  elif [ $USING_ORG -eq 3 ]; then
-    export CORE_PEER_ADDRESS=peer0.org3.example.com:11051
+  if [ -n "${ORG_NAMES[$USING_ORG]}" ]; then
+    export CORE_PEER_ADDRESS=peer0.${ORG_NAMES[$USING_ORG]}.example.com:$((7051 + ($USING_ORG - 1) * 2000))
   else
     errorln "ORG Unknown"
   fi
 }
 
 # parsePeerConnectionParameters $@
-# Helper function that sets the peer connection parameters for a chaincode
-# operation
+# Helper function that sets the peer connection parameters for a chaincode operation
 parsePeerConnectionParameters() {
   PEER_CONN_PARMS=()
   PEERS=""
   while [ "$#" -gt 0 ]; do
     setGlobals $1
-    PEER="peer0.org$1"
+    PEER="peer0.${ORG_NAMES[$1]}.example.com"
     ## Set peer addresses
-    if [ -z "$PEERS" ]
-    then
-	PEERS="$PEER"
+    if [ -z "$PEERS" ]; then
+        PEERS="$PEER"
     else
-	PEERS="$PEERS $PEER"
+        PEERS="$PEERS $PEER"
     fi
     PEER_CONN_PARMS=("${PEER_CONN_PARMS[@]}" --peerAddresses $CORE_PEER_ADDRESS)
     ## Set path to TLS certificate
-    CA=PEER0_ORG$1_CA
-    TLSINFO=(--tlsRootCertFiles "${!CA}")
+    CA=${ORG_CA_FILES[$1]}
+    TLSINFO=(--tlsRootCertFiles "${CA}")
     PEER_CONN_PARMS=("${PEER_CONN_PARMS[@]}" "${TLSINFO[@]}")
     # shift by one to get to the next organization
     shift
