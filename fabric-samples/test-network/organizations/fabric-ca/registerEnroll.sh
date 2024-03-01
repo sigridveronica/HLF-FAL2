@@ -30,7 +30,7 @@ function createOEM() {
     Certificate: cacerts/localhost-7054-ca-oem.pem
     OrganizationalUnitIdentifier: orderer' > "${PWD}/organizations/peerOrganizations/oem.example.com/msp/config.yaml"
 
-  # Create and enroll peers for OEM
+  # Create and enroll peers for OEM, including explicit handling for signcerts
   for PEER in QA1.1 QA1.2 SW1.1 SW1.2 SW1.3; do
     infoln "Registering and enrolling $PEER for OEM"
     mkdir -p "${PWD}/organizations/peerOrganizations/oem.example.com/peers/${PEER}.oem.example.com"
@@ -40,23 +40,11 @@ function createOEM() {
 
     # Copy the config.yaml
     cp "${PWD}/organizations/peerOrganizations/oem.example.com/msp/config.yaml" "${PWD}/organizations/peerOrganizations/oem.example.com/peers/${PEER}.oem.example.com/msp/config.yaml"
+
+    # Explicit handling for signcerts
+    mkdir -p "${PWD}/organizations/peerOrganizations/oem.example.com/peers/${PEER}.oem.example.com/msp/signcerts"
+    cp "${PWD}/organizations/peerOrganizations/oem.example.com/peers/${PEER}.oem.example.com/msp/keystore/*_sk" "${PWD}/organizations/peerOrganizations/oem.example.com/peers/${PEER}.oem.example.com/msp/signcerts/${PEER}.oem.example.com-cert.pem"
   done
-
-  # Additional setup for OEM organization omitted for brevity
-}
-
-# Function to create Supplier organization
-function createSupplier() {
-  infoln "Enrolling the CA admin for Supplier"
-  # Similar setup as createOEM but for Supplier organization
-  # Ensure to replace 'oem' with 'supplier' and adjust peer names and ports accordingly
-}
-
-# Function to create Airline organization
-function createAirline() {
-  infoln "Enrolling the CA admin for Airline"
-  # Similar setup as createOEM but for Airline organization
-  # Ensure to replace 'oem' with 'airline' and adjust peer names and ports accordingly
 }
 
 # Function to create Supplier organization
@@ -94,7 +82,12 @@ function createSupplier() {
 
   # Copy the config.yaml
   cp "${PWD}/organizations/peerOrganizations/supplier.example.com/msp/config.yaml" "${PWD}/organizations/peerOrganizations/supplier.example.com/peers/QA2.1.supplier.example.com/msp/config.yaml"
+
+  # Explicit handling for signcerts for Supplier
+  mkdir -p "${PWD}/organizations/peerOrganizations/supplier.example.com/peers/QA2.1.supplier.example.com/msp/signcerts"
+  cp "${PWD}/organizations/peerOrganizations/supplier.example.com/peers/QA2.1.supplier.example.com/msp/keystore/*_sk" "${PWD}/organizations/peerOrganizations/supplier.example.com/peers/QA2.1.supplier.example.com/msp/signcerts/QA2.1.supplier.example.com-cert.pem"
 }
+
 # Function to create Airline organization
 function createAirline() {
   infoln "Enrolling the CA admin for Airline"
@@ -130,7 +123,12 @@ function createAirline() {
 
   # Copy the config.yaml
   cp "${PWD}/organizations/peerOrganizations/airline.example.com/msp/config.yaml" "${PWD}/organizations/peerOrganizations/airline.example.com/peers/QA3.1.airline.example.com/msp/config.yaml"
+
+  # Explicit handling for signcerts for Airline
+  mkdir -p "${PWD}/organizations/peerOrganizations/airline.example.com/peers/QA3.1.airline.example.com/msp/signcerts"
+  cp "${PWD}/organizations/peerOrganizations/airline.example.com/peers/QA3.1.airline.example.com/msp/keystore/*_sk" "${PWD}/organizations/peerOrganizations/airline.example.com/peers/QA3.1.airline.example.com/msp/signcerts/QA3.1.airline.example.com-cert.pem"
 }
+
 
 
 function createOrderer() {
