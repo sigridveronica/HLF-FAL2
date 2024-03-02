@@ -138,7 +138,7 @@ function chaincodeInvokeInit() {
 }
 
 # Additional functions remain unchanged
-unction chaincodeQuery() {
+function chaincodeQuery() {
   ORG=$1
   setGlobals $ORG
   infoln "Querying on peer0.org${ORG} on channel '$CHANNEL_NAME'..."

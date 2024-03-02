@@ -2,8 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# default to using OEM
+# default to using OEM and peer QA1.1
 ORG=${1:-OEM}
+PEER=${2:-QA1.1}
 
 # Exit on first error, print all commands.
 set -e
@@ -18,14 +19,36 @@ PEER_QA1_1_CA=${DIR}/test-network/organizations/peerOrganizations/oem.example.co
 PEER_QA2_1_CA=${DIR}/test-network/organizations/peerOrganizations/supplier.example.com/tlsca/tlsca.supplier.example.com-cert.pem
 PEER_QA3_1_CA=${DIR}/test-network/organizations/peerOrganizations/airline.example.com/tlsca/tlsca.airline.example.com-cert.pem
 
-# Convert ORG to lowercase using tr for compatibility
+# Convert ORG and PEER to lowercase using tr for compatibility
 org_lower=$(echo "$ORG" | tr '[:upper:]' '[:lower:]')
+peer_lower=$(echo "$PEER" | tr '[:upper:]' '[:lower:]')
 
-# Set environment variables based on organization
+# Set environment variables based on organization and peer
 if [[ $org_lower == "oem" ]]; then
    CORE_PEER_LOCALMSPID=OEMMSP
    CORE_PEER_MSPCONFIGPATH=${DIR}/test-network/organizations/peerOrganizations/oem.example.com/users/Admin@oem.example.com/msp
-   CORE_PEER_ADDRESS=localhost:7051 # Assuming QA1.1 is running on this port
+   # Set the address based on the peer
+   case $peer_lower in
+     "qa1.1")
+       CORE_PEER_ADDRESS=localhost:7051
+       ;;
+     "qa1.2")
+       CORE_PEER_ADDRESS=localhost:7052
+       ;;
+     "sw1.1")
+       CORE_PEER_ADDRESS=localhost:7053
+       ;;
+     "sw1.2")
+       CORE_PEER_ADDRESS=localhost:7054
+       ;;
+     "sw1.3")
+       CORE_PEER_ADDRESS=localhost:7055
+       ;;
+     *)
+       echo "Unknown peer $PEER for organization $ORG"
+       exit 2
+       ;;
+   esac
    CORE_PEER_TLS_ROOTCERT_FILE=${PEER_QA1_1_CA}
 
 elif [[ $org_lower == "supplier" ]]; then
@@ -41,7 +64,7 @@ elif [[ $org_lower == "airline" ]]; then
    CORE_PEER_TLS_ROOTCERT_FILE=${PEER_QA3_1_CA}
 
 else
-   echo "Unknown \"$ORG\", please choose OEM, Supplier, or Airline"
+   echo "Unknown organization \"$ORG\""
    exit 1
 fi
 

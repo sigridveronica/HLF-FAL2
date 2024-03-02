@@ -74,44 +74,66 @@ checkPrereqs
 PACKAGE_ID=$(peer lifecycle chaincode calculatepackageid ${CC_NAME}.tar.gz)
 
 ## Install chaincode on peers of OEM, Airline, and Supplier
-infoln "Installing chaincode on peer0.OEM..."
-installChaincode OEM
-infoln "Installing chaincode on peer0.Airline..."
-installChaincode Airline
-infoln "Installing chaincode on peer0.Supplier..."
-installChaincode Supplier
+# Use function calls with peer names as arguments correctly
+infoln "Installing chaincode on peers of OEM..."
+installChaincode QA1_1_oem_example_com
+installChaincode QA1_2_oem_example_com
+installChaincode SW1_1_oem_example_com
+installChaincode SW1_2_oem_example_com
+installChaincode SW1_3_oem_example_com
+
+infoln "Installing chaincode on peer of Supplier..."
+installChaincode QA2_1_supplier_example_com
+
+infoln "Installing chaincode on peer of Airline..."
+installChaincode QA3_1_airline_example_com
 
 resolveSequence
 
-## query whether the chaincode is installed
-queryInstalled OEM
-queryInstalled Airline
-queryInstalled Supplier
+## Query whether the chaincode is installed
+queryInstalled QA1_1_oem_example_com
+queryInstalled QA1_2_oem_example_com
+queryInstalled SW1_1_oem_example_com
+queryInstalled SW1_2_oem_example_com
+queryInstalled SW1_3_oem_example_com
+queryInstalled QA2_1_supplier_example_com
+queryInstalled QA3_1_airline_example_com
 
-## approve the definition for OEM, Airline, and Supplier
-approveForMyOrg OEM
-approveForMyOrg Airline
-approveForMyOrg Supplier
+## Approve the definition for OEM, Airline, and Supplier
+approveForMyOrg QA1_1_oem_example_com
+approveForMyOrg QA1_2_oem_example_com
+approveForMyOrg SW1_1_oem_example_com
+approveForMyOrg SW1_2_oem_example_com
+approveForMyOrg SW1_3_oem_example_com
+approveForMyOrg QA2_1_supplier_example_com
+approveForMyOrg QA3_1_airline_example_com
 
-## check whether the chaincode definition is ready to be committed
-## expect OEM, Airline, and Supplier to have approved
-checkCommitReadiness OEM "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
-checkCommitReadiness Airline "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
-checkCommitReadiness Supplier "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
+## Check whether the chaincode definition is ready to be committed
+checkCommitReadiness QA1_1_oem_example_com "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
+checkCommitReadiness QA1_2_oem_example_com "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
+checkCommitReadiness SW1_1_oem_example_com "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
+checkCommitReadiness SW1_2_oem_example_com "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
+checkCommitReadiness SW1_3_oem_example_com "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
+checkCommitReadiness QA2_1_supplier_example_com "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
+checkCommitReadiness QA3_1_airline_example_com "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
 
-## now that we know for sure all orgs have approved, commit the definition
-commitChaincodeDefinition OEM Airline Supplier
+## Now that we know for sure all orgs have approved, commit the definition
+commitChaincodeDefinition QA1_1_oem_example_com QA1_2_oem_example_com SW1_1_oem_example_com SW1_2_oem_example_com SW1_3_oem_example_com QA2_1_supplier_example_com QA3_1_airline_example_com
 
-## query on all orgs to see that the definition committed successfully
-queryCommitted OEM
-queryCommitted Airline
-queryCommitted Supplier
+## Query on all orgs to see that the definition committed successfully
+queryCommitted QA1_1_oem_example_com
+queryCommitted QA1_2_oem_example_com
+queryCommitted SW1_1_oem_example_com
+queryCommitted SW1_2_oem_example_com
+queryCommitted SW1_3_oem_example_com
+queryCommitted QA2_1_supplier_example_com
+queryCommitted QA3_1_airline_example_com
 
 ## Invoke the chaincode - this does require that the chaincode have the 'initLedger' method defined
 if [ "$CC_INIT_FCN" = "NA" ]; then
   infoln "Chaincode initialization is not required"
 else
-  chaincodeInvokeInit OEM Airline Supplier
+  chaincodeInvokeInit QA1_1_oem_example_com QA1_2_oem_example_com SW1_1_oem_example_com SW1_2_oem_example_com SW1_3_oem_example_com QA2_1_supplier_example_com QA3_1_airline_example_com
 fi
 
 exit 0
