@@ -1,2 +1,0 @@
-Operation with detail is an extension to operations that allow additional information to be encapsulated with an operation. An operation
-can be supplemented by a connector and that information will be returned in the `detail` field.
