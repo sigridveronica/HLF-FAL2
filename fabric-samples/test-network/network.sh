@@ -353,7 +353,6 @@ function queryChaincode() {
 }
 
 
-# Tear down running network
 function networkDown() {
   local temp_compose=$COMPOSE_FILE_BASE
   COMPOSE_FILE_BASE=compose-bft-test-net.yaml
@@ -362,39 +361,60 @@ function networkDown() {
   COMPOSE_CA_FILES="-f compose/${COMPOSE_FILE_CA} -f compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_CA}"
   COMPOSE_FILES="${COMPOSE_BASE_FILES} ${COMPOSE_COUCH_FILES} ${COMPOSE_CA_FILES}"
 
-  # stop org3 containers also in addition to org1 and org2, in case we were running sample to add org3
-  COMPOSE_ORG3_BASE_FILES="-f addOrg3/compose/${COMPOSE_FILE_ORG3_BASE} -f addOrg3/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_ORG3_BASE}"
-  COMPOSE_ORG3_COUCH_FILES="-f addOrg3/compose/${COMPOSE_FILE_ORG3_COUCH} -f addOrg3/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_ORG3_COUCH}"
-  COMPOSE_ORG3_CA_FILES="-f addOrg3/compose/${COMPOSE_FILE_ORG3_CA} -f addOrg3/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_ORG3_CA}"
-  COMPOSE_ORG3_FILES="${COMPOSE_ORG3_BASE_FILES} ${COMPOSE_ORG3_COUCH_FILES} ${COMPOSE_ORG3_CA_FILES}"
-
   if [ "${CONTAINER_CLI}" == "docker" ]; then
-    DOCKER_SOCK=$DOCKER_SOCK ${CONTAINER_CLI_COMPOSE} ${COMPOSE_FILES} ${COMPOSE_ORG3_FILES} down --volumes --remove-orphans
+    DOCKER_SOCK=$DOCKER_SOCK ${CONTAINER_CLI_COMPOSE} ${COMPOSE_FILES} down --volumes --remove-orphans
   elif [ "${CONTAINER_CLI}" == "podman" ]; then
-    ${CONTAINER_CLI_COMPOSE} ${COMPOSE_FILES} ${COMPOSE_ORG3_FILES} down --volumes
+    ${CONTAINER_CLI_COMPOSE} ${COMPOSE_FILES} down --volumes
   else
     fatalln "Container CLI  ${CONTAINER_CLI} not supported"
   fi
 
   COMPOSE_FILE_BASE=$temp_compose
 
-  # Don't remove the generated artifacts -- note, the ledgers are always removed
   if [ "$MODE" != "restart" ]; then
-    # Bring down the network, deleting the volumes
-    ${CONTAINER_CLI} volume rm docker_orderer.example.com docker_peer0.org1.example.com docker_peer0.org2.example.com
-    #Cleanup the chaincode containers
+    # Adjusted to remove volumes for the new organization containers
+    ${CONTAINER_CLI} volume rm docker_orderer.example.com docker_peerOEM.example.com docker_peerAirline.example.com docker_peerSupplier.example.com
+    # Cleanup the chaincode containers
     clearContainers
-    #Cleanup images
+    # Cleanup images
     removeUnwantedImages
-    # remove orderer block and other channel configuration transactions and certs
+    # Remove orderer block and other channel configuration transactions and certs
     ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf system-genesis-block/*.block organizations/peerOrganizations organizations/ordererOrganizations'
-    ## remove fabric ca artifacts
-    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf organizations/fabric-ca/org1/msp organizations/fabric-ca/org1/tls-cert.pem organizations/fabric-ca/org1/ca-cert.pem organizations/fabric-ca/org1/IssuerPublicKey organizations/fabric-ca/org1/IssuerRevocationPublicKey organizations/fabric-ca/org1/fabric-ca-server.db'
-    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf organizations/fabric-ca/org2/msp organizations/fabric-ca/org2/tls-cert.pem organizations/fabric-ca/org2/ca-cert.pem organizations/fabric-ca/org2/IssuerPublicKey organizations/fabric-ca/org2/IssuerRevocationPublicKey organizations/fabric-ca/org2/fabric-ca-server.db'
-    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf organizations/fabric-ca/ordererOrg/msp organizations/fabric-ca/ordererOrg/tls-cert.pem organizations/fabric-ca/ordererOrg/ca-cert.pem organizations/fabric-ca/ordererOrg/IssuerPublicKey organizations/fabric-ca/ordererOrg/IssuerRevocationPublicKey organizations/fabric-ca/ordererOrg/fabric-ca-server.db'
-    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf addOrg3/fabric-ca/org3/msp addOrg3/fabric-ca/org3/tls-cert.pem addOrg3/fabric-ca/org3/ca-cert.pem addOrg3/fabric-ca/org3/IssuerPublicKey addOrg3/fabric-ca/org3/IssuerRevocationPublicKey addOrg3/fabric-ca/org3/fabric-ca-server.db'
-    # remove channel and script artifacts
+    ## Remove fabric ca artifacts for the new organizations
+    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf organizations/fabric-ca/oem organizations/fabric-ca/airline organizations/fabric-ca/supplier'
+    # Remove channel and script artifacts
     ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf channel-artifacts log.txt *.tar.gz'
+    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf system-genesis-block/*.block organizations/peerOrganizations organizations/ordererOrganizations'
+## Remove fabric ca artifacts for Org1, Org2, OrdererOrg, and new organizations (OEM, Airline, Supplier)
+    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf \
+        organizations/fabric-ca/ordererOrg/msp \
+        organizations/fabric-ca/ordererOrg/tls-cert.pem \
+        organizations/fabric-ca/ordererOrg/ca-cert.pem \
+        organizations/fabric-ca/ordererOrg/IssuerPublicKey \
+        organizations/fabric-ca/ordererOrg/IssuerRevocationPublicKey \
+        organizations/fabric-ca/ordererOrg/fabric-ca-server.db \
+        organizations/fabric-ca/oem/msp \
+        organizations/fabric-ca/oem/tls-cert.pem \
+        organizations/fabric-ca/oem/ca-cert.pem \
+        organizations/fabric-ca/oem/IssuerPublicKey \
+        organizations/fabric-ca/oem/IssuerRevocationPublicKey \
+        organizations/fabric-ca/oem/fabric-ca-server.db \
+        organizations/fabric-ca/airline/msp \
+        organizations/fabric-ca/airline/tls-cert.pem \
+        organizations/fabric-ca/airline/ca-cert.pem \
+        organizations/fabric-ca/airline/IssuerPublicKey \
+        organizations/fabric-ca/airline/IssuerRevocationPublicKey \
+        organizations/fabric-ca/airline/fabric-ca-server.db \
+        organizations/fabric-ca/supplier/msp \
+        organizations/fabric-ca/supplier/tls-cert.pem \
+        organizations/fabric-ca/supplier/ca-cert.pem \
+        organizations/fabric-ca/supplier/IssuerPublicKey \
+        organizations/fabric-ca/supplier/IssuerRevocationPublicKey \
+        organizations/fabric-ca/supplier/fabric-ca-server.db'
+    # Remove channel and script artifacts
+    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf channel-artifacts log.txt *.tar.gz'
+      
+  
   fi
 }
 ###############################################################################################

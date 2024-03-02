@@ -1,4 +1,10 @@
 #!/bin/bash
+#
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 
 source scripts/utils.sh
 
@@ -41,7 +47,20 @@ println "- VERBOSE: ${C_GREEN}${VERBOSE}${C_RESET}"
 
 FABRIC_CFG_PATH=$PWD/../config/
 
-# Validation checks for CC_NAME and CC_SRC_PATH
+#User has not provided a name
+if [ -z "$CC_NAME" ] || [ "$CC_NAME" = "NA" ]; then
+  fatalln "No chaincode name was provided. Valid call example: ./network.sh deployCCAS -ccn basic -ccp ../asset-transfer-basic/chaincode-go "
+
+# User has not provided a path
+elif [ -z "$CC_SRC_PATH" ] || [ "$CC_SRC_PATH" = "NA" ]; then
+  fatalln "No chaincode path was provided. Valid call example: ./network.sh deployCCAS -ccn basic -ccp ../asset-transfer-basic/chaincode-go "
+
+## Make sure that the path to the chaincode exists
+elif [ ! -d "$CC_SRC_PATH" ]; then
+  fatalln "Path to chaincode does not exist. Please provide different path."
+fi
+
+
 
 if [ "$CC_END_POLICY" = "NA" ]; then
   CC_END_POLICY=""
@@ -54,11 +73,11 @@ if [ "$CC_COLL_CONFIG" = "NA" ]; then
 else
   CC_COLL_CONFIG="--collections-config $CC_COLL_CONFIG"
 fi
-# Import utils
+
+# import utils
 . scripts/envVar.sh
 . scripts/ccutils.sh
 
-# Package Chaincode
 packageChaincode() {
 
   address="{{.peername}}_${CC_NAME}_ccaas:${CCAAS_SERVER_PORT}"
@@ -92,7 +111,6 @@ METADATA-EOF
   
     successln "Chaincode is packaged  ${address}"
 }
-# Build Docker Images
 
 buildDockerImages() {
   # if set don't build - useful when you want to debug yourself
@@ -113,82 +131,93 @@ buildDockerImages() {
   fi
 }
 
-# Start Docker Container
-# Function modified to start containers for OEM, Airline, and Supplier
 startDockerContainer() {
+  # start the docker container
   if [ "$CCAAS_DOCKER_RUN" = "true" ]; then
-    infoln "Starting the Chaincode-as-a-Service docker container for OEM, Airline, and Supplier..."
-    # Start container for OEM
-    ${CONTAINER_CLI} run --rm -d --name peer0oem_${CC_NAME}_ccaas \
+    infoln "Starting the Chaincode-as-a-Service docker container..."
+    set -x
+    ${CONTAINER_CLI} run --rm -d --name peer0org1_${CC_NAME}_ccaas  \
                   --network fabric_test \
                   -e CHAINCODE_SERVER_ADDRESS=0.0.0.0:${CCAAS_SERVER_PORT} \
                   -e CHAINCODE_ID=$PACKAGE_ID -e CORE_CHAINCODE_ID_NAME=$PACKAGE_ID \
                     ${CC_NAME}_ccaas_image:latest
-    # Start container for Airline
-    ${CONTAINER_CLI} run --rm -d --name peer0airline_${CC_NAME}_ccaas \
+
+    ${CONTAINER_CLI} run  --rm -d --name peer0org2_${CC_NAME}_ccaas \
                   --network fabric_test \
                   -e CHAINCODE_SERVER_ADDRESS=0.0.0.0:${CCAAS_SERVER_PORT} \
                   -e CHAINCODE_ID=$PACKAGE_ID -e CORE_CHAINCODE_ID_NAME=$PACKAGE_ID \
                     ${CC_NAME}_ccaas_image:latest
-    # Start container for Supplier
-    ${CONTAINER_CLI} run --rm -d --name peer0supplier_${CC_NAME}_ccaas \
-                  --network fabric_test \
-                  -e CHAINCODE_SERVER_ADDRESS=0.0.0.0:${CCAAS_SERVER_PORT} \
-                  -e CHAINCODE_ID=$PACKAGE_ID -e CORE_CHAINCODE_ID_NAME=$PACKAGE_ID \
-                    ${CC_NAME}_ccaas_image:latest
+    res=$?
+    { set +x; } 2>/dev/null
+    cat log.txt
+    verifyResult $res "Failed to start the container container '${CC_NAME}_ccaas_image:latest' "
+    successln "Docker container started succesfully '${CC_NAME}_ccaas_image:latest'" 
   else
+  
     infoln "Not starting docker containers; these are the commands we would have run"
-    # Display commands for OEM, Airline, and Supplier
+    infoln "    ${CONTAINER_CLI} run --rm -d --name peer0org1_${CC_NAME}_ccaas  \
+                  --network fabric_test \
+                  -e CHAINCODE_SERVER_ADDRESS=0.0.0.0:${CCAAS_SERVER_PORT} \
+                  -e CHAINCODE_ID=$PACKAGE_ID -e CORE_CHAINCODE_ID_NAME=$PACKAGE_ID \
+                    ${CC_NAME}_ccaas_image:latest"
+    infoln "    ${CONTAINER_CLI} run --rm -d --name peer0org2_${CC_NAME}_ccaas  \
+                  --network fabric_test \
+                  -e CHAINCODE_SERVER_ADDRESS=0.0.0.0:${CCAAS_SERVER_PORT} \
+                  -e CHAINCODE_ID=$PACKAGE_ID -e CORE_CHAINCODE_ID_NAME=$PACKAGE_ID \
+                    ${CC_NAME}_ccaas_image:latest"
+
   fi
 }
 
 # Build the docker image 
 buildDockerImages
 
-## Package the chaincode
+## package the chaincode
 packageChaincode
 
-## Install chaincode on peers of OEM, Airline, and Supplier
-infoln "Installing chaincode on peer0.OEM..."
-installChaincode OEM
-infoln "Installing chaincode on peer0.Airline..."
-installChaincode Airline
-infoln "Installing chaincode on peer0.Supplier..."
-installChaincode Supplier
+## Install chaincode on peer0.org1 and peer0.org2
+infoln "Installing chaincode on peer0.org1..."
+installChaincode 1
+infoln "Install chaincode on peer0.org2..."
+installChaincode 2
 
 resolveSequence
 
-## Query whether the chaincode is installed
-queryInstalled OEM
-queryInstalled Airline
-queryInstalled Supplier
+## query whether the chaincode is installed
+queryInstalled 1
 
-## Approve the definition for OEM, Airline, and Supplier
-approveForMyOrg OEM
-approveForMyOrg Airline
-approveForMyOrg Supplier
+## approve the definition for org1
+approveForMyOrg 1
 
-## Check whether the chaincode definition is ready to be committed
-checkCommitReadiness OEM "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
-checkCommitReadiness Airline "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
-checkCommitReadiness Supplier "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
+## check whether the chaincode definition is ready to be committed
+## expect org1 to have approved and org2 not to
+checkCommitReadiness 1 "\"Org1MSP\": true" "\"Org2MSP\": false"
+checkCommitReadiness 2 "\"Org1MSP\": true" "\"Org2MSP\": false"
 
-## Now that we know for sure all orgs have approved, commit the definition
-commitChaincodeDefinition OEM Airline Supplier
+## now approve also for org2
+approveForMyOrg 2
 
-## Query on all orgs to see that the definition committed successfully
-queryCommitted OEM
-queryCommitted Airline
-queryCommitted Supplier
+## check whether the chaincode definition is ready to be committed
+## expect them both to have approved
+checkCommitReadiness 1 "\"Org1MSP\": true" "\"Org2MSP\": true"
+checkCommitReadiness 2 "\"Org1MSP\": true" "\"Org2MSP\": true"
 
-# Start the container
+## now that we know for sure both orgs have approved, commit the definition
+commitChaincodeDefinition 1 2
+
+## query on both orgs to see that the definition committed successfully
+queryCommitted 1
+queryCommitted 2
+
+# start the container
 startDockerContainer
 
-## Invoke the chaincode - this does require that the chaincode have the 'initLedger' method defined
+## Invoke the chaincode - this does require that the chaincode have the 'initLedger'
+## method defined
 if [ "$CC_INIT_FCN" = "NA" ]; then
   infoln "Chaincode initialization is not required"
 else
-  chaincodeInvokeInit OEM Airline Supplier
+  chaincodeInvokeInit 1 2
 fi
 
 exit 0

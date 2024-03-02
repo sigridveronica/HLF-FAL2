@@ -73,45 +73,46 @@ checkPrereqs
 
 PACKAGE_ID=$(peer lifecycle chaincode calculatepackageid ${CC_NAME}.tar.gz)
 
-## Install chaincode on peers of OEM, Airline, and Supplier
-infoln "Installing chaincode on peer0.OEM..."
-installChaincode OEM
-infoln "Installing chaincode on peer0.Airline..."
-installChaincode Airline
-infoln "Installing chaincode on peer0.Supplier..."
-installChaincode Supplier
+## Install chaincode on peer0.org1 and peer0.org2
+infoln "Installing chaincode on peer0.org1..."
+installChaincode 1
+infoln "Install chaincode on peer0.org2..."
+installChaincode 2
 
 resolveSequence
 
 ## query whether the chaincode is installed
-queryInstalled OEM
-queryInstalled Airline
-queryInstalled Supplier
+queryInstalled 1
 
-## approve the definition for OEM, Airline, and Supplier
-approveForMyOrg OEM
-approveForMyOrg Airline
-approveForMyOrg Supplier
+## approve the definition for org1
+approveForMyOrg 1
 
 ## check whether the chaincode definition is ready to be committed
-## expect OEM, Airline, and Supplier to have approved
-checkCommitReadiness OEM "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
-checkCommitReadiness Airline "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
-checkCommitReadiness Supplier "\"OEMMSP\": true" "\"AirlineMSP\": true" "\"SupplierMSP\": true"
+## expect org1 to have approved and org2 not to
+checkCommitReadiness 1 "\"Org1MSP\": true" "\"Org2MSP\": false"
+checkCommitReadiness 2 "\"Org1MSP\": true" "\"Org2MSP\": false"
 
-## now that we know for sure all orgs have approved, commit the definition
-commitChaincodeDefinition OEM Airline Supplier
+## now approve also for org2
+approveForMyOrg 2
 
-## query on all orgs to see that the definition committed successfully
-queryCommitted OEM
-queryCommitted Airline
-queryCommitted Supplier
+## check whether the chaincode definition is ready to be committed
+## expect them both to have approved
+checkCommitReadiness 1 "\"Org1MSP\": true" "\"Org2MSP\": true"
+checkCommitReadiness 2 "\"Org1MSP\": true" "\"Org2MSP\": true"
 
-## Invoke the chaincode - this does require that the chaincode have the 'initLedger' method defined
+## now that we know for sure both orgs have approved, commit the definition
+commitChaincodeDefinition 1 2
+
+## query on both orgs to see that the definition committed successfully
+queryCommitted 1
+queryCommitted 2
+
+## Invoke the chaincode - this does require that the chaincode have the 'initLedger'
+## method defined
 if [ "$CC_INIT_FCN" = "NA" ]; then
   infoln "Chaincode initialization is not required"
 else
-  chaincodeInvokeInit OEM Airline Supplier
+  chaincodeInvokeInit 1 2
 fi
 
 exit 0
