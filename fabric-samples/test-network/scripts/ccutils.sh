@@ -1,4 +1,5 @@
-#!/bin/bash
+
+
 
 # installChaincode ORG
 function installChaincode() {

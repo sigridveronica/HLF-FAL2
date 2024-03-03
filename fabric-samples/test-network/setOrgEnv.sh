@@ -27,29 +27,34 @@ peer_lower=$(echo "$PEER" | tr '[:upper:]' '[:lower:]')
 if [[ $org_lower == "oem" ]]; then
    CORE_PEER_LOCALMSPID=OEMMSP
    CORE_PEER_MSPCONFIGPATH=${DIR}/test-network/organizations/peerOrganizations/oem.example.com/users/Admin@oem.example.com/msp
-   # Set the address based on the peer
+   # Dynamically set the CORE_PEER_TLS_ROOTCERT_FILE based on the peer
    case $peer_lower in
      "qa1.1")
        CORE_PEER_ADDRESS=localhost:7051
+       CORE_PEER_TLS_ROOTCERT_FILE=${DIR}/test-network/organizations/peerOrganizations/oem.example.com/peers/QA1.1.oem.example.com/tls/ca.crt
        ;;
      "qa1.2")
        CORE_PEER_ADDRESS=localhost:7052
+       CORE_PEER_TLS_ROOTCERT_FILE=${DIR}/test-network/organizations/peerOrganizations/oem.example.com/peers/QA1.2.oem.example.com/tls/ca.crt
        ;;
      "sw1.1")
        CORE_PEER_ADDRESS=localhost:7053
+       CORE_PEER_TLS_ROOTCERT_FILE=${DIR}/test-network/organizations/peerOrganizations/oem.example.com/peers/SW1.1.oem.example.com/tls/ca.crt
        ;;
      "sw1.2")
        CORE_PEER_ADDRESS=localhost:7054
+       CORE_PEER_TLS_ROOTCERT_FILE=${DIR}/test-network/organizations/peerOrganizations/oem.example.com/peers/SW1.2.oem.example.com/tls/ca.crt
        ;;
      "sw1.3")
        CORE_PEER_ADDRESS=localhost:7055
+       CORE_PEER_TLS_ROOTCERT_FILE=${DIR}/test-network/organizations/peerOrganizations/oem.example.com/peers/SW1.3.oem.example.com/tls/ca.crt
        ;;
      *)
        echo "Unknown peer $PEER for organization $ORG"
        exit 2
        ;;
    esac
-   CORE_PEER_TLS_ROOTCERT_FILE=${PEER_QA1_1_CA}
+   #CORE_PEER_TLS_ROOTCERT_FILE=${PEER_QA1_1_CA}
 
 elif [[ $org_lower == "supplier" ]]; then
    CORE_PEER_LOCALMSPID=SupplierMSP

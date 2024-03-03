@@ -90,7 +90,7 @@ services:
       - FABRIC_LOGGING_SPEC=INFO
     volumes:
       - /var/run/:/host/var/run/
-      - ./../chaincode:/opt/gopath/src/github.com/hyperledger/fabric-samples/chaincode
+      - ./chaincode:/opt/gopath/src/github.com/hyperledger/fabric-samples/chaincode
       - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
       - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric-samples/scripts
       - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric-samples/channel-artifacts
