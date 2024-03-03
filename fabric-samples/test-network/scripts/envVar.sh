@@ -95,17 +95,46 @@ setGlobalsCLI() {
   setGlobals $1
 
   local USING_ORG=""
+  local PEER_NAME=""
+  local DOMAIN="example.com" # Adjust this to your actual domain if different
+
   if [ -z "$OVERRIDE_ORG" ]; then
     USING_ORG=$1
   else
     USING_ORG="${OVERRIDE_ORG}"
   fi
-  if [ -n "${ORG_NAMES[$USING_ORG]}" ]; then
-    # Adjust the domain name format and port calculation as per your network's configuration
-    export CORE_PEER_ADDRESS=peer0.${ORG_NAMES[$USING_ORG]}.yourdomain.com:$((7051 + ($USING_ORG - 1) * 2000))
-  else
-    errorln "ORG Unknown"
-  fi
+
+  # Determine the peer name based on the organization and peer number
+  case $USING_ORG in
+    1)
+      PEER_NAME="QA1.1.oem"
+      ;;
+    2)
+      PEER_NAME="SW1.1.oem"
+      ;;
+    3)
+      PEER_NAME="QA2.1.supplier"
+      ;;
+    4)
+      PEER_NAME="SW1.2.oem"
+      ;;
+    5)
+      PEER_NAME="SW1.3.oem"
+      ;;
+    6)
+      PEER_NAME="QA3.1.airline"
+      ;;
+    *)
+      echo "Invalid organization number"
+      exit 1
+      ;;
+  esac
+
+  # Assuming all peers are using the same port number for simplicity
+  # Adjust the port number as per your network's configuration
+  local PORT=7051
+
+  export CORE_PEER_ADDRESS=${PEER_NAME}.${DOMAIN}:${PORT}
 }
 
 # parsePeerConnectionParameters $@
@@ -136,9 +165,10 @@ parsePeerConnectionParameters() {
   PEER_CONN_PARMS=()
   PEERS=""
   while [ "$#" -gt 0 ]; do
-    setGlobals $1
-    # Adjust the peer naming convention as per your network's configuration
-    PEER="peer0.${ORG_NAMES[$1]}.yourdomain.com"
+    setGlobals $1 $2 # Assuming the second parameter is the peer name like QA1.1, SW1.1, etc.
+    # Directly use the peer name and organization from the setGlobals function
+    PEER="${CORE_PEER_ADDRESS}"
+
     ## Set peer addresses
     if [ -z "$PEERS" ]; then
         PEERS="$PEER"
@@ -146,12 +176,13 @@ parsePeerConnectionParameters() {
         PEERS="$PEERS $PEER"
     fi
     PEER_CONN_PARMS=("${PEER_CONN_PARMS[@]}" --peerAddresses $CORE_PEER_ADDRESS)
-    ## Adjust the path to the TLS certificate as per your network's configuration
-    CA=${ORG_CA_FILES[$1]}
-    TLSINFO=(--tlsRootCertFiles "${CA}")
+
+    ## Use the CORE_PEER_TLS_ROOTCERT_FILE variable set by setGlobals for the TLS certificate path
+    TLSINFO=(--tlsRootCertFiles "${CORE_PEER_TLS_ROOTCERT_FILE}")
     PEER_CONN_PARMS=("${PEER_CONN_PARMS[@]}" "${TLSINFO[@]}")
-    # shift by one to get to the next organization
-    shift
+
+    # Shift by two to get to the next organization and peer, if applicable
+    shift 2
   done
 }
 
